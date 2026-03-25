@@ -1,2 +1,2 @@
-:HL["/projekt-market-/_next/static/chunks/9bdef9f4600f5436.css","style"]
-0:{"buildId":"CPrKuocWB9dYP0ZJ0QqzC","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
+:HL["/projekt-market-/_next/static/chunks/0abe85d0169bb358.css","style"]
+0:{"buildId":"c_geBkzFkh3bgWduGWOUf","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
