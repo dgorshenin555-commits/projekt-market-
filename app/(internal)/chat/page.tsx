@@ -89,10 +89,14 @@ const MOCK_CHATS: ChatRoom[] = [
 
 export default function ChatPage() {
   const [chats, setChats] = useState<ChatRoom[]>(MOCK_CHATS);
+  // На десктопе всегда открыт первый чат по умолчанию
   const [activeChatId, setActiveChatId] = useState<string>(chats[0].id);
   const [newMessage, setNewMessage] = useState('');
   const [search, setSearch] = useState('');
+  
+  // Состояния для десктопа и мобилки
   const [showInfo, setShowInfo] = useState(true);
+  const [mobileView, setMobileView] = useState<'list' | 'chat' | 'info'>('list');
   
   const activeChat = chats.find(c => c.id === activeChatId) || chats[0];
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -100,7 +104,7 @@ export default function ChatPage() {
   // Scroll to bottom on load/new message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-  }, [activeChatId, chats]);
+  }, [activeChatId, chats, mobileView]);
 
   // Mark all as read when opening
   useEffect(() => {
@@ -144,15 +148,22 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="animate-in" style={{
+    <div className="animate-in chat-layout" style={{
       height: 'calc(100vh - 100px)', // adjust based on header
       display: 'flex',
       gap: 16,
-      marginTop: -8 // compensate for page-container padding to max height
+      marginTop: -8, // compensate for page-container padding to max height
+      position: 'relative',
+      ...({
+        '--mobile-list-display': mobileView === 'list' ? 'flex' : 'none',
+        '--mobile-chat-display': mobileView === 'chat' ? 'flex' : 'none',
+        '--mobile-info-display': mobileView === 'info' ? 'block' : 'none',
+        '--desktop-info-display': showInfo ? 'block' : 'none',
+      } as React.CSSProperties)
     }}>
       
       {/* 1. Left Sidebar - Chat List */}
-      <div className="card" style={{ 
+      <div className="card chat-sidebar" style={{ 
         width: 320, 
         display: 'flex', 
         flexDirection: 'column', 
@@ -183,7 +194,10 @@ export default function ChatPage() {
             return (
               <div 
                 key={chat.id}
-                onClick={() => setActiveChatId(chat.id)}
+                onClick={() => {
+                  setActiveChatId(chat.id);
+                  setMobileView('chat');
+                }}
                 style={{
                   padding: '16px 20px',
                   borderBottom: '1px solid var(--border)',
@@ -243,7 +257,7 @@ export default function ChatPage() {
       </div>
 
       {/* 2. Main Chat Window */}
-      <div className="card" style={{ 
+      <div className="card chat-main" style={{ 
         flex: 1, 
         padding: 0, 
         display: 'flex', 
@@ -264,17 +278,25 @@ export default function ChatPage() {
               zIndex: 10
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                 <button 
+                  className="mobile-back-btn" 
+                  onClick={() => setMobileView('list')}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-primary)', padding: '0 8px 0 0', cursor: 'pointer', fontSize: 24 }}
+                 >
+                   ‹
+                 </button>
                  <div style={{
                     width: 48, height: 48, borderRadius: '50%',
                     background: activeChat.recipientType === 'designer' ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'linear-gradient(135deg, #43e97b, #38f9d7)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'white', fontWeight: 700, fontSize: 18
+                    color: 'white', fontWeight: 700, fontSize: 18,
+                    flexShrink: 0
                   }}>
                     {activeChat.recipientType === 'designer' ? 'Д' : 'З'}
                  </div>
-                 <div>
-                   <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>{activeChat.recipientName}</h2>
-                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                 <div style={{ minWidth: 0 }}>
+                   <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeChat.recipientName}</h2>
+                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
                      {activeChat.recipientType === 'designer' ? 'Проектировщик' : 'Заказчик'}
                      <span>•</span>
                      <span style={{ color: 'var(--status-success)' }}>В сети</span>
@@ -283,8 +305,17 @@ export default function ChatPage() {
               </div>
 
               <div style={{ display: 'flex', gap: 12 }}>
-                <button className="btn btn-secondary btn-sm" onClick={() => setShowInfo(!showInfo)}>
+                <button 
+                  className="btn btn-secondary btn-sm chat-desktop-info-btn" 
+                  onClick={() => setShowInfo(!showInfo)}
+                >
                    {showInfo ? 'Скрыть детали' : 'Информация'}
+                </button>
+                <button 
+                  className="btn btn-secondary btn-sm chat-mobile-info-btn" 
+                  onClick={() => setMobileView('info')}
+                >
+                   ℹ️
                 </button>
               </div>
             </div>
@@ -312,7 +343,7 @@ export default function ChatPage() {
                   }}>
                     {/* Avatar placeholder for recipient */}
                     {!isMe ? (
-                      <div style={{ width: 32 }}>
+                      <div className="chat-avatar-placeholder" style={{ width: 32 }}>
                         {showAvatar && (
                           <div style={{
                             width: 32, height: 32, borderRadius: '50%',
@@ -328,7 +359,7 @@ export default function ChatPage() {
 
                     {/* Bubble */}
                     <div style={{
-                      maxWidth: '70%',
+                      maxWidth: '85%',
                       background: isMe ? 'var(--accent)' : 'var(--bg-secondary)',
                       padding: '12px 16px',
                       borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
@@ -386,7 +417,7 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area */}
-            <div style={{ padding: '20px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)' }}>
+            <div style={{ padding: '16px 20px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)' }}>
               <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
                 <button type="button" style={{ 
                    width: 44, height: 44, borderRadius: '50%', 
@@ -399,7 +430,7 @@ export default function ChatPage() {
                 </button>
                 <div style={{ flex: 1, position: 'relative' }}>
                   <textarea 
-                    placeholder="Напишите сообщение..." 
+                    placeholder="Сообщение..." 
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyDown={(e) => {
@@ -449,14 +480,20 @@ export default function ChatPage() {
       </div>
 
       {/* 3. Right Sidebar - Order Info */}
-      {showInfo && activeChat && (
-        <div className="card" style={{ 
+      {activeChat && (
+        <div className="card chat-info" style={{ 
           width: 280, 
           padding: 0,
           border: '1px solid var(--border)',
           overflowY: 'auto',
           animation: 'slideInRight 0.3s ease'
         }}>
+          {/* Mobile Header for Info */}
+          <div className="chat-mobile-info-header" style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'none', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Детали заявки</h2>
+            <button onClick={() => setMobileView('chat')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: 'var(--text-primary)' }}>×</button>
+          </div>
+
           <div style={{ padding: '20px', borderBottom: '1px solid var(--border)' }}>
              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 16 }}>
                Связанная заявка
@@ -505,11 +542,61 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Basic Keyframe polyfill via inline style just for completeness */}
+      {/* Basic Keyframe & Media Query polyfill via inline style */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes slideInRight {
           from { opacity: 0; transform: translateX(20px); }
           to { opacity: 1; transform: translateX(0); }
+        }
+
+        .chat-info {
+           display: var(--desktop-info-display);
+        }
+        .chat-sidebar {
+           display: flex;
+        }
+        .chat-main {
+           display: flex;
+        }
+        .mobile-back-btn { display: none; }
+        .chat-mobile-info-btn { display: none; }
+
+        @media (max-width: 768px) {
+          .chat-layout {
+            gap: 0 !important;
+            margin-top: 0 !important;
+            height: calc(100vh - 80px) !important;
+          }
+          .chat-sidebar {
+            display: var(--mobile-list-display) !important;
+            width: 100% !important;
+            border-radius: 0 !important;
+            border: none !important;
+            border-top: 1px solid var(--border) !important;
+          }
+          .chat-main {
+            display: var(--mobile-chat-display) !important;
+            width: 100% !important;
+            border-radius: 0 !important;
+            border: none !important;
+            border-top: 1px solid var(--border) !important;
+          }
+          .chat-info {
+            display: var(--mobile-info-display) !important;
+            width: 100% !important;
+            border-radius: 0 !important;
+            border: none !important;
+            border-top: 1px solid var(--border) !important;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 50;
+            background: var(--bg-primary);
+          }
+          .mobile-back-btn { display: flex !important; }
+          .chat-mobile-info-btn { display: flex !important; }
+          .chat-desktop-info-btn { display: none !important; }
+          .chat-mobile-info-header { display: flex !important; }
+          .chat-avatar-placeholder { display: none !important; }
         }
       `}} />
     </div>
