@@ -68,7 +68,7 @@ export default function DashboardPage() {
               {myOrders.map((order) => {
                 const status = ORDER_STATUS_MAP[order.status];
                 return (
-                  <Link key={order.id} href={`/orders/${order.id}`} style={{ textDecoration: 'none' }}>
+                  <Link key={order.id} href={`/orders/detail?id=${order.id}`} style={{ textDecoration: 'none' }}>
                     <div className="order-card">
                       <div className="order-card-header">
                         <div className="order-card-title">{order.title}</div>
@@ -102,7 +102,7 @@ export default function DashboardPage() {
           ) : (
             <div className="orders-list">
               {myResponses.map((r) => (
-                <Link key={r.id} href={`/orders/${r.orderId}`} style={{ textDecoration: 'none' }}>
+                <Link key={r.id} href={`/orders/detail?id=${r.orderId}`} style={{ textDecoration: 'none' }}>
                   <div className="order-card">
                     <div className="order-card-header">
                       <div className="order-card-title">Отклик на заявку</div>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { MOCK_DESIGNERS, MOCK_PROJECTS } from '@/lib/mock-data';
 import { Designer } from '@/lib/types';
 import { REGIONS } from '@/lib/constants';
+import projBg from '@/public/project-buildings.png';
 
 const TABS = ['Лайтпр', 'Заявки', 'СРО', 'Проекты'];
 
@@ -220,7 +221,7 @@ export default function DesignersPage() {
               {MOCK_PROJECTS.map((p) => (
                 <div key={p.id} className="dsn-project-thumb">
                   <div className="dsn-project-img" style={{
-                    backgroundImage: `url(/project-buildings.png)`,
+                    backgroundImage: `url(${projBg.src})`,
                     backgroundSize: 'cover',
                     backgroundPosition: p.id === 'prj1' ? 'top left' : p.id === 'prj2' ? 'top right' : p.id === 'prj3' ? 'bottom left' : 'bottom right',
                   }} />

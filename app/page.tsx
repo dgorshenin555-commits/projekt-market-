@@ -1,39 +1,110 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/store';
 import { MOCK_ORDERS } from '@/lib/mock-data';
+import { 
+  UserRound, 
+  CheckSquare, 
+  Factory, 
+  MessageSquare, 
+  Trophy, 
+  ArrowUpRight, 
+  Menu, 
+  X,
+  LayoutGrid,
+  ScanFace,
+  PenTool,
+  ShieldCheck,
+  Stamp,
+  Database,
+  BarChart2,
+  Settings2
+} from 'lucide-react';
+
+const NAV_ITEMS = [
+  { icon: LayoutGrid, label: 'Заявки', href: '/orders' },
+  { icon: ScanFace, label: 'Экспертиза', href: '/expertise' },
+  { icon: PenTool, label: 'Проектировщики', href: '/designers' },
+  { icon: ShieldCheck, label: 'Эксперты', href: '/experts' },
+  { icon: Stamp, label: 'Производители', href: '/manufacturers' },
+  { icon: Database, label: 'Нормативы', href: '/standards' },
+  { icon: MessageSquare, label: 'Коммуникации', href: '/chat' },
+  { icon: BarChart2, label: 'Аналитика', href: '/analytics' },
+  { icon: Settings2, label: 'Настройки', href: '/settings' },
+];
 
 export default function HomePage() {
   const { user } = useApp();
+  const [isMenuOpen, setMenuOpen] = useState(false);
+
 
   return (
     <div className="landing-page">
       {/* Header */}
       <header className="landing-header">
-        <div className="landing-logo">
-          <div className="landing-logo-icon">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <rect x="2" y="4" width="4" height="12" rx="1" fill="#a78bfa"/>
-              <rect x="8" y="2" width="4" height="16" rx="1" fill="#8b5cf6"/>
-              <rect x="14" y="6" width="4" height="10" rx="1" fill="#6d28d9"/>
-            </svg>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <button className="landing-menu-toggle" onClick={() => setMenuOpen(true)}>
+            <Menu size={24} />
+          </button>
+          <div className="landing-logo">
+            <div className="landing-logo-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 3H3v14h18V3z" />
+                <path d="M3 21l3-4" />
+                <path d="M21 21l-3-4" />
+                <path d="M9 7h6" />
+                <path d="M9 12h6" />
+              </svg>
+            </div>
+            <span style={{ letterSpacing: '2px', fontWeight: 800 }}>КУЛЬМАН</span>
           </div>
-          Проектирование
         </div>
-        <nav className="landing-nav">
-          <Link href="/orders" className="landing-nav-link">🏠 Продукты и решения</Link>
-          <Link href="/orders" className="landing-nav-link">Кейсы</Link>
-          {user ? (
-            <Link href="/dashboard" className="btn btn-secondary btn-sm">Войти в сервис</Link>
-          ) : (
-            <Link href="/auth" className="btn btn-secondary btn-sm">Войти в сервис</Link>
-          )}
-          <div className="landing-avatar">
-            {user ? user.name.substring(0, 2).toUpperCase() : 'АБ'}
-          </div>
-        </nav>
+
       </header>
+      {isMenuOpen && (
+        <div className="landing-menu-overlay" onClick={() => setMenuOpen(false)} />
+      )}
+      
+      <div className={`landing-mobile-menu ${isMenuOpen ? 'open' : ''}`}>
+        <div className="landing-menu-header">
+          <div className="landing-logo">
+            <div className="landing-logo-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 3H3v14h18V3z" />
+                <path d="M3 21l3-4" />
+                <path d="M21 21l-3-4" />
+                <path d="M9 7h6" />
+                <path d="M9 12h6" />
+              </svg>
+            </div>
+            <span style={{ letterSpacing: '2px', fontWeight: 800 }}>КУЛЬМАН</span>
+          </div>
+          <button className="landing-mobile-close" onClick={() => setMenuOpen(false)}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <nav className="landing-sidebar-nav">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="sidebar-link"
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="sidebar-link-icon">
+                  <Icon size={20} strokeWidth={2.5} />
+                </span>
+                <span className="sidebar-text">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
 
       {/* Hero Section */}
       <section className="landing-hero">
@@ -84,17 +155,21 @@ export default function HomePage() {
         <div className="landing-features-row landing-features-row-3">
           {/* Проектировщики */}
           <div className="landing-feature-card">
-            <div className="landing-feature-icon landing-feature-icon-blue">👷</div>
+            <div className="landing-feature-icon landing-feature-icon-blue">
+              <UserRound size={28} strokeWidth={1.5} />
+            </div>
             <h3>Проектировщики</h3>
             <p>Подбор исполнителей по, заявке СРО, рейтингу, география и опыт.</p>
             <div className="landing-feature-footer">
-              <Link href="/orders" className="landing-feature-link">Выбрать специалиста →</Link>
+              <Link href="/designers" className="landing-feature-link">Выбрать специалиста →</Link>
             </div>
           </div>
 
           {/* Экспертиза */}
           <div className="landing-feature-card">
-            <div className="landing-feature-icon landing-feature-icon-green">🪖</div>
+            <div className="landing-feature-icon landing-feature-icon-green">
+              <CheckSquare size={28} strokeWidth={1.5} />
+            </div>
             <h3>Экспертиза</h3>
             <p>Замечания, ответы, итерации и статусы прохождений в одном месте.</p>
             <div className="landing-feature-tags">
@@ -104,13 +179,15 @@ export default function HomePage() {
               <span className="landing-mini-tag">Заключение</span>
             </div>
             <div className="landing-feature-footer">
-              <Link href="/orders" className="landing-feature-link">Открыть трекер →</Link>
+              <Link href="/expertise" className="landing-feature-link">Открыть трекер →</Link>
             </div>
           </div>
 
           {/* Производители */}
           <div className="landing-feature-card">
-            <div className="landing-feature-icon landing-feature-icon-purple">🏭</div>
+            <div className="landing-feature-icon landing-feature-icon-purple">
+              <Factory size={28} strokeWidth={1.5} />
+            </div>
             <h3>Производители</h3>
             <p>Каталог решений с BIM моделями, узлами, нормативной привязкой.</p>
             <div className="landing-feature-tags">
@@ -122,7 +199,7 @@ export default function HomePage() {
               <span className="landing-mini-tag">Советы</span>
             </div>
             <div className="landing-feature-footer">
-              <Link href="/orders" className="landing-feature-link">Перейти в каталог →</Link>
+              <Link href="/manufacturers" className="landing-feature-link">Перейти в каталог →</Link>
             </div>
           </div>
         </div>
@@ -131,7 +208,9 @@ export default function HomePage() {
         <div className="landing-features-row landing-features-row-3">
           {/* Коммуникации */}
           <div className="landing-feature-card">
-            <div className="landing-feature-icon landing-feature-icon-teal">💬</div>
+            <div className="landing-feature-icon landing-feature-icon-teal">
+              <MessageSquare size={28} strokeWidth={1.5} />
+            </div>
             <h3>Коммуникации</h3>
             <p>Чаты, обсуждение файлов DWG и прозрачная история тарифов.</p>
             <div className="landing-feature-tags">
@@ -145,7 +224,9 @@ export default function HomePage() {
 
           {/* Рейтинги */}
           <div className="landing-feature-card">
-            <div className="landing-feature-icon landing-feature-icon-yellow">🏆</div>
+            <div className="landing-feature-icon landing-feature-icon-yellow">
+              <Trophy size={28} strokeWidth={1.5} />
+            </div>
             <h3>Рейтинги</h3>
             <p>Сроки, качество. Успешные проекты. Проверка. Репутация.</p>
             <div className="landing-feature-tags">
@@ -158,7 +239,7 @@ export default function HomePage() {
           {/* Все решения */}
           <div className="landing-feature-card landing-feature-card-cta">
             <h3>Все решения</h3>
-            <div className="landing-feature-arrow">↗</div>
+            <div className="landing-feature-arrow"><ArrowUpRight size={24} /></div>
           </div>
         </div>
       </section>

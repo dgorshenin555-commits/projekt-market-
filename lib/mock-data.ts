@@ -380,3 +380,77 @@ export const MOCK_FAVORITES = [
   { code: 'СНиП 23.101', spec: 'СП МОС-01.2004' },
   { code: 'ГОСТ 32800-2013', spec: 'СП МОС-01.2014' },
 ];
+
+// === Заявки на экспертизу ===
+export const MOCK_EXPERTISE_REQUESTS: import('./types').ExpertiseRequest[] = [
+  {
+    id: 'expReq1',
+    title: 'Комплексная экспертиза ПД для ЖК «Северный»',
+    description: 'Требуется негосударственная экспертиза проектной документации для жилого комплекса (3 корпуса по 15 этажей). Обязательно наличие аккредитации.',
+    objectType: 'commercial',
+    sections: ['ПЗ', 'АР', 'КР', 'ЭОМ', 'ВК', 'ОВ', 'ПОС', 'СМ'],
+    requiredSro: true,
+    budget: '450 000 ₽',
+    deadline: '2026-05-15',
+    responsesCount: 4,
+    createdAt: '2026-03-24T10:00:00Z'
+  },
+  {
+    id: 'expReq2',
+    title: 'Проверка раздела КР (Складской комплекс)',
+    description: 'Нужна проверка расчетов и узлов металлокаркаса складского комплекса (12 000 м²).',
+    objectType: 'industrial',
+    sections: ['КР'],
+    requiredSro: false,
+    budget: '50 000 ₽',
+    deadline: '2026-04-10',
+    responsesCount: 12,
+    createdAt: '2026-03-25T14:30:00Z'
+  },
+  {
+    id: 'expReq3',
+    title: 'Аудит инженерных систем (Индустриальный парк)',
+    description: 'Технический аудит разделов ВВ, ОВиК и ЭОМ для нового индустриального парка.',
+    objectType: 'industrial',
+    sections: ['ЭОМ', 'ВК', 'ОВ'],
+    requiredSro: true,
+    budget: '120 000 ₽',
+    deadline: '2026-04-20',
+    responsesCount: 2,
+    createdAt: '2026-03-20T09:15:00Z'
+  }
+];
+
+// === Проекты на экспертизе (Dashboard) ===
+export const MOCK_EXPERTISE_PROJECTS: import('./types').ExpertiseProject[] = [
+  {
+    id: 'expPrj1',
+    title: 'Реконструкция школы №15',
+    company: 'ООО «СтройПроект»',
+    status: 'На проверке',
+    totalRemarks: 12,
+    fixedRemarks: 0,
+    criticalRemarks: 3,
+    dueDate: '2026-04-05'
+  },
+  {
+    id: 'expPrj2',
+    title: 'Торговый центр «Галерея»',
+    company: 'АО «ИнвестСтрой»',
+    status: 'Ожидает исправлений',
+    totalRemarks: 24,
+    fixedRemarks: 18,
+    criticalRemarks: 0,
+    dueDate: '2026-03-30'
+  },
+  {
+    id: 'expPrj3',
+    title: 'Коттеджный посёлок «Лесной»',
+    company: 'ИП Смирнов А.В.',
+    status: 'Положительное заключение',
+    totalRemarks: 8,
+    fixedRemarks: 8,
+    criticalRemarks: 0,
+    dueDate: '2026-03-20'
+  }
+];

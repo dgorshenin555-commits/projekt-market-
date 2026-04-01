@@ -1,10 +1,12 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/lib/store';
 import { OBJECT_TYPE_LABELS, ORDER_STATUS_MAP } from '@/lib/constants';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import heroBg from '@/public/hero-bg.png';
 
 const TABS = ['Описание', 'Проектировщики', 'Коммуникации', 'Замечания', 'Файлы'];
 
@@ -15,14 +17,15 @@ const TIMELINE_STEPS = [
   { label: 'Закрыта', done: false },
 ];
 
-export default function OrderDetailPage() {
-  const params = useParams();
+function OrderDetailContent() {
+  const searchParams = useSearchParams();
   const { getOrderById, getResponsesForOrder, user, addResponse } = useApp();
   const [activeTab, setActiveTab] = useState('Описание');
   const [responseText, setResponseText] = useState('');
   const [propBudget, setPropBudget] = useState('');
 
-  const order = getOrderById(params.id as string);
+  const orderId = searchParams.get('id');
+  const order = orderId ? getOrderById(orderId) : null;
   const responses = order ? getResponsesForOrder(order.id) : [];
 
   if (!order) {
@@ -76,10 +79,11 @@ export default function OrderDetailPage() {
         overflow: 'hidden',
         position: 'relative',
       }}>
-        <img
-          src="/hero-bg.png"
-          alt="Project"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
+        <Image
+          src={heroBg}
+          alt="Project Cover"
+          fill
+          style={{ objectFit: 'cover', opacity: 0.6 }}
         />
       </div>
 
@@ -311,5 +315,13 @@ export default function OrderDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OrderDetailPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center' }}>Загрузка...</div>}>
+      <OrderDetailContent />
+    </Suspense>
   );
 }

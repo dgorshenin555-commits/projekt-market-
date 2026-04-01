@@ -138,3 +138,29 @@ export interface StandardDocument {
   updatedYear?: number;
   isFeatured?: boolean;
 }
+
+// === Заявка на экспертизу ===
+export interface ExpertiseRequest {
+  id: string;
+  title: string;
+  description: string;
+  objectType: ObjectType;
+  sections: string[];
+  requiredSro: boolean;
+  budget?: string;
+  deadline?: string;
+  responsesCount: number;
+  createdAt: string;
+}
+
+// === Экспертиза в работе (Проект) ===
+export interface ExpertiseProject {
+  id: string;
+  title: string;
+  company: string;
+  status: 'На проверке' | 'Ожидает исправлений' | 'Положительное заключение';
+  totalRemarks: number;
+  fixedRemarks: number;
+  criticalRemarks: number;
+  dueDate: string;
+}

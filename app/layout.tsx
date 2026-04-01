@@ -3,8 +3,8 @@ import "./globals.css";
 import { AppProvider } from "@/lib/store";
 
 export const metadata: Metadata = {
-  title: "ПроектМаркет — Маркетплейс проектных услуг",
-  description: "Платформа для заказа проектной документации. Заказчики размещают задания, проектировщики откликаются.",
+  title: "Кульман — Маркетплейс проектирования",
+  description: "Профессиональная платформа для проектировщиков и заказчиков документации.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
