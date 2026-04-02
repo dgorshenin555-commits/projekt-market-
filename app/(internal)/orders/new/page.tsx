@@ -164,7 +164,11 @@ export default function NewOrderPage() {
 
   const goToStep = (targetStep: number) => {
     if (targetStep < step) {
-      setStep(targetStep);
+      if (objectType === 'private' && targetStep === 3) {
+        setStep(2);
+      } else {
+        setStep(targetStep);
+      }
     }
   };
 
@@ -542,13 +546,28 @@ export default function NewOrderPage() {
         <div className="funnel-actions">
           <button
             className="btn btn-secondary"
-            onClick={() => setStep(Math.max(0, step - 1))}
+            onClick={() => {
+              if (step === 4 && objectType === 'private') {
+                setStep(2);
+              } else {
+                setStep(Math.max(0, step - 1));
+              }
+            }}
             disabled={step === 0}
           >
             ← Назад
           </button>
           {step < STEPS.length - 1 ? (
-            <button className="btn btn-primary" onClick={() => setStep(step + 1)} disabled={!canNext()}>
+            <button className="btn btn-primary" onClick={() => {
+              if (step === 2 && objectType === 'private') {
+                setStage('RD');
+                setSelectedSections([]);
+                setSelectedSpecialists([]);
+                setStep(4);
+              } else {
+                setStep(step + 1);
+              }
+            }} disabled={!canNext()}>
               Далее →
             </button>
           ) : (
