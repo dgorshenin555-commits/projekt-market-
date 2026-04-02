@@ -2,7 +2,7 @@ import { ObjectType, DesignStage } from './types';
 
 // === Типы объектов ===
 export const OBJECT_TYPES: { value: ObjectType; label: string; icon: string }[] = [
-  { value: 'private', label: 'Частное строительство', icon: '🏠' },
+  { value: 'private', label: 'Частное строительство', icon: '/private-house.png' },
   { value: 'commercial', label: 'Коммерческая недвижимость', icon: '🏢' },
   { value: 'industrial', label: 'Промышленность', icon: '🏭' },
   { value: 'linear', label: 'Линейные объекты', icon: '🛤️' },

@@ -195,7 +195,7 @@ export default function NewOrderPage() {
           <div className="fnl-success-summary">
             <div className="fnl-success-summary-row">
               <span>Тип объекта</span>
-              <span>{objectTypeLabel?.icon} {objectTypeLabel?.label}</span>
+              <span>{objectTypeLabel?.icon?.startsWith('/') ? <img src={objectTypeLabel.icon} alt="" style={{ height: 16, display: 'inline-block', verticalAlign: 'middle', marginRight: 4 }} /> : objectTypeLabel?.icon} {objectTypeLabel?.label}</span>
             </div>
             <div className="fnl-success-summary-row">
               <span>Регион</span>
@@ -280,7 +280,9 @@ export default function NewOrderPage() {
                   className={`funnel-option ${objectType === t.value ? 'selected' : ''}`}
                   onClick={() => setObjectType(t.value)}
                 >
-                  <div className="funnel-option-icon">{t.icon}</div>
+                  <div className="funnel-option-icon">
+                    {t.icon.startsWith('/') ? <img src={t.icon} alt={t.label} style={{ height: 48, margin: '0 auto' }} /> : t.icon}
+                  </div>
                   <div className="funnel-option-label">{t.label}</div>
                 </div>
               ))}
@@ -587,7 +589,9 @@ export default function NewOrderPage() {
           {objectType ? (
             <div className="fnl-sidebar-item">
               <span className="fnl-sidebar-label">Тип объекта</span>
-              <span className="fnl-sidebar-value">{objectTypeLabel?.icon} {objectTypeLabel?.label}</span>
+              <span className="fnl-sidebar-value">
+                {objectTypeLabel?.icon?.startsWith('/') ? <img src={objectTypeLabel.icon} alt="" style={{ height: 16, display: 'inline-block', verticalAlign: 'middle', margin: '-2px 4px 0 0' }} /> : objectTypeLabel?.icon} {objectTypeLabel?.label}
+              </span>
             </div>
           ) : (
             <div className="fnl-sidebar-item empty">
