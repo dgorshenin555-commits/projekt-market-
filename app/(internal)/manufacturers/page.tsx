@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { MOCK_MANUFACTURERS, MOCK_MANUFACTURER_PRODUCTS } from '@/lib/mock-data';
 import { REGIONS } from '@/lib/constants';
+import { Manufacturer } from '@/lib/types';
 
 const SECTION_FILTERS = ['АР', 'КР', 'ЭОМ', 'ВК', 'ОВиК', 'ГС', 'ТХ', 'ПБ', 'СС'];
 
@@ -107,6 +108,7 @@ export default function ManufacturersPage() {
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [sectionFilter, setSectionFilter] = useState('');
+  const [selectedMfr, setSelectedMfr] = useState<Manufacturer | null>(null);
 
   const filteredMakers = MOCK_MANUFACTURERS.filter(m => {
     if (search && !m.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -149,7 +151,11 @@ export default function ManufacturersPage() {
       <div className="mfg-grid">
         {/* Manufacturer Cards */}
         {filteredMakers.map((mfg, idx) => (
-          <div key={mfg.id} className={`mfg-card ${idx === 0 ? 'mfg-card-featured' : ''}`}>
+          <div 
+            key={mfg.id} 
+            className={`mfg-card ${idx === 0 ? 'mfg-card-featured' : ''} card-clickable`}
+            onClick={() => setSelectedMfr(mfg)}
+          >
             <div className="mfg-card-top">
               <div className="mfg-logo">
                 {MANUFACTURER_LOGOS[mfg.id] || (
@@ -228,6 +234,69 @@ export default function ManufacturersPage() {
           </div>
         ))}
       </div>
+
+      {/* Manufacturer Details Slide-over Modal */}
+      {selectedMfr && (
+        <>
+          <div className="mfg-modal-backdrop" onClick={() => setSelectedMfr(null)}></div>
+          <div className="mfg-modal-panel">
+            <div className="mfg-modal-header">
+              <div className="mfg-modal-logo">
+                {MANUFACTURER_LOGOS[selectedMfr.id] || (
+                  <div className="mfg-avatar" style={{ width: 48, height: 48, borderRadius: 8, fontSize: 18 }}>
+                    {selectedMfr.name.includes('«') ? selectedMfr.name.substring(selectedMfr.name.indexOf('«') + 1, selectedMfr.name.indexOf('«') + 3).toUpperCase() : selectedMfr.name.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="mfg-modal-title">
+                <h2>{selectedMfr.name}</h2>
+                <div className="mfg-modal-rating">⭐ {selectedMfr.rating} Рейтинг</div>
+              </div>
+              <button className="mfg-modal-close" onClick={() => setSelectedMfr(null)}>✕</button>
+            </div>
+
+            <div className="mfg-modal-content">
+              <p className="mfg-modal-desc">{selectedMfr.description}</p>
+              
+              <div className="mfg-tags" style={{ marginBottom: 24 }}>
+                {selectedMfr.tags.map((t, i) => (
+                  <span key={i} className="mfg-tag">{t}</span>
+                ))}
+              </div>
+
+              {selectedMfr.website && (
+                <div className="mfg-modal-contacts">
+                  <div className="mfg-modal-contact">🌐 <a href={`https://${selectedMfr.website}`} target="_blank" rel="noreferrer">{selectedMfr.website}</a></div>
+                  <div className="mfg-modal-contact">✉️ <a href={`mailto:${selectedMfr.email}`}>{selectedMfr.email}</a></div>
+                  <div className="mfg-modal-contact">📞 <a href={`tel:${selectedMfr.phone}`}>{selectedMfr.phone}</a></div>
+                  <div className="mfg-modal-contact">🚚 {selectedMfr.deliveryRegion}</div>
+                </div>
+              )}
+
+              <h3 className="mfg-modal-section-title">Каталог решений ({MOCK_MANUFACTURER_PRODUCTS.length})</h3>
+              <div className="mfg-modal-products">
+                {MOCK_MANUFACTURER_PRODUCTS.map((prod) => (
+                  <div key={prod.id} className="mfg-modal-product-card">
+                    <div className="mfg-modal-product-icon">
+                      {PRODUCT_ICONS[prod.id]}
+                    </div>
+                    <div className="mfg-modal-product-info">
+                      <h4>{prod.name}</h4>
+                      <p>{prod.subtitle}</p>
+                      <span className="mfg-modal-product-spec">{prod.spec}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mfg-modal-actions">
+                <button className="btn btn-primary" style={{ width: '100%', padding: '14px', background: 'linear-gradient(90deg, #8b5cf6, #6d28d9)' }}>Связаться с производителем</button>
+                <button className="btn btn-secondary" style={{ width: '100%', padding: '14px', marginTop: '12px' }}>Добавить все BIM в проект</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
