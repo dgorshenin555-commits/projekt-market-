@@ -513,10 +513,11 @@ export default function NewOrderPage() {
                   </span>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Желаемый срок</label>
+                  <label className="form-label">Желаемый срок (в днях)</label>
                   <input
                     className="form-input"
-                    type="date"
+                    type="number"
+                    placeholder="Например: 30"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
                   />
