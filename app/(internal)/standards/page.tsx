@@ -1,7 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MOCK_STANDARDS, MOCK_RECENT_CHANGES, MOCK_FAVORITES } from '@/lib/mock-data';
+import { useApp } from '@/lib/store';
+
+const PER_PAGE = 6;
 
 const DOC_CATEGORIES = ['ГОСТ', 'СП', 'СНиП', 'ТУ', 'ISO / EN', 'Архив'] as const;
 const CATEGORY_ICONS: Record<string, string> = {
@@ -14,18 +17,52 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export default function StandardsPage() {
+  const { notify } = useApp();
   const [activeCategory, setActiveCategory] = useState('ГОСТ');
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [sortBy, setSortBy] = useState<'type' | 'date' | ''>('');
+  const [page, setPage] = useState(1);
+  const [favorites, setFavorites] = useState<Set<string>>(
+    () => new Set(MOCK_STANDARDS.filter(s => s.isFeatured).map(s => s.id))
+  );
 
   const featured = MOCK_STANDARDS.filter(s => s.isFeatured);
-  const tableData = MOCK_STANDARDS.filter(s => {
+  const filtered = MOCK_STANDARDS.filter(s => {
     if (search && !s.code.toLowerCase().includes(search.toLowerCase()) && !s.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (typeFilter && s.type !== typeFilter) return false;
     if (statusFilter && s.status !== statusFilter) return false;
     return true;
   });
+
+  const sorted = sortBy
+    ? [...filtered].sort((a, b) =>
+        sortBy === 'date' ? b.year - a.year : a.type.localeCompare(b.type)
+      )
+    : filtered;
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PER_PAGE));
+  const tableData = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  // Reset to first page whenever filters/search/sort change
+  useEffect(() => {
+    setPage(1);
+  }, [search, typeFilter, statusFilter, sortBy]);
+
+  const toggleFavorite = (id: string) => {
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const copyCode = (code: string) => {
+    navigator.clipboard?.writeText(code);
+    notify('Код скопирован: ' + code);
+  };
 
   return (
     <div className="animate-in std-layout">
@@ -69,8 +106,8 @@ export default function StandardsPage() {
             <option value="ТУ">ТУ</option>
             <option value="ISO">ISO</option>
           </select>
-          <button className="dsn-filter-chip">📄 Тип документа</button>
-          <button className="dsn-filter-chip">📅 Дата обновления</button>
+          <button className={`dsn-filter-chip ${sortBy === 'type' ? 'active' : ''}`} onClick={() => setSortBy(v => v === 'type' ? '' : 'type')}>📄 Тип документа</button>
+          <button className={`dsn-filter-chip ${sortBy === 'date' ? 'active' : ''}`} onClick={() => setSortBy(v => v === 'date' ? '' : 'date')}>📅 Дата обновления</button>
           <select className="dsn-filter-chip" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
             <option value="">Статус</option>
             <option value="Актуален">Актуален</option>
@@ -98,13 +135,13 @@ export default function StandardsPage() {
                 Раздел: {doc.section}
               </div>
               <div className="std-featured-actions">
-                <button className="std-btn-download">
+                <button className="std-btn-download" onClick={() => notify('Скачивание документа — в разработке')}>
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4-4h2.5V3h3v5H12L8 12z"/><path d="M14 14H2v-2h12v2z"/></svg>
                   Скачать PDF
                 </button>
-                <button className="std-btn-icon">🔍</button>
-                <button className="std-btn-icon">📋</button>
-                <button className="std-btn-icon">📌</button>
+                <button className="std-btn-icon" onClick={() => notify('Просмотр документа — в разработке')}>🔍</button>
+                <button className="std-btn-icon" onClick={() => copyCode(doc.code)}>📋</button>
+                <button className={`std-btn-icon ${favorites.has(doc.id) ? 'active' : ''}`} onClick={() => toggleFavorite(doc.id)}>📌</button>
               </div>
             </div>
           ))}
@@ -127,7 +164,7 @@ export default function StandardsPage() {
             <tbody>
               {tableData.map((doc, idx) => (
                 <tr key={doc.id}>
-                  <td>{idx + 1}</td>
+                  <td>{(page - 1) * PER_PAGE + idx + 1}</td>
                   <td className="std-table-code">{doc.code}</td>
                   <td>{doc.section}</td>
                   <td>{doc.year}</td>
@@ -138,8 +175,8 @@ export default function StandardsPage() {
                   </td>
                   <td>
                     <div className="std-table-actions">
-                      <button className="std-btn-icon-sm">📄</button>
-                      <button className="std-btn-icon-sm">⬇️</button>
+                      <button className="std-btn-icon-sm" onClick={() => notify('Просмотр документа — в разработке')}>📄</button>
+                      <button className="std-btn-icon-sm" onClick={() => notify('Скачивание документа — в разработке')}>⬇️</button>
                     </div>
                   </td>
                 </tr>
@@ -150,10 +187,18 @@ export default function StandardsPage() {
 
         {/* Pagination */}
         <div className="std-pagination">
-          <button className="std-page-btn">←</button>
-          <button className="std-page-btn active">1</button>
+          <button className="std-page-btn" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>←</button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button
+              key={p}
+              className={`std-page-btn ${page === p ? 'active' : ''}`}
+              onClick={() => setPage(p)}
+            >
+              {p}
+            </button>
+          ))}
           <span className="std-page-dots">...</span>
-          <button className="std-page-btn">→</button>
+          <button className="std-page-btn" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>→</button>
         </div>
       </main>
 

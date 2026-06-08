@@ -1,16 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  FileText, 
-  Wallet, 
-  Target, 
-  Activity, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Users,
+  FileText,
+  Wallet,
+  Target,
+  Activity,
   BarChart3
 } from 'lucide-react';
+import { useApp } from '@/lib/store';
 
 const KPI_STATS = [
   { 
@@ -68,6 +69,47 @@ const TRENDS_DATA = [
 
 export default function AnalyticsPage() {
   const [objectCategory, setObjectCategory] = useState<'all' | 'residential' | 'industrial'>('all');
+  const { notify } = useApp();
+
+  const handleExport = () => {
+    const esc = (v: string | number) => {
+      const s = String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows: (string | number)[][] = [];
+
+    rows.push(['Ключевые показатели']);
+    rows.push(['Показатель', 'Значение', 'Динамика']);
+    KPI_STATS.forEach((s) => rows.push([s.label, s.value, s.trend]));
+    rows.push([]);
+
+    rows.push(['Востребованность кадров (Дефицит)']);
+    rows.push(['Раздел', 'Заявок', 'Свободно подрядчиков', 'Соотношение, %', 'Статус']);
+    DEFICIT_DATA.forEach((d) => rows.push([d.section, d.orders, d.supply, d.ratio, d.status]));
+    rows.push([]);
+
+    rows.push(['Средняя стоимость контрактов по разделам']);
+    rows.push(['Раздел', 'Тип объекта', 'Мин', 'Средняя', 'Макс', 'Ед. изм.']);
+    PRICES_DATA.forEach((p) => rows.push([p.section, p.subtitle, p.min, p.avg, p.max, p.unit]));
+    rows.push([]);
+
+    rows.push(['Структура публикуемых ПИР']);
+    rows.push(['Тип объекта', 'Доля, %']);
+    TRENDS_DATA.forEach((t) => rows.push([t.label, t.percent]));
+
+    const csv = '﻿' + rows.map((r) => r.map(esc).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'analytics-report.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    notify('Отчёт экспортирован');
+  };
 
   return (
     <div className="animate-in" style={{ maxWidth: 1200, margin: '0 auto', paddingBottom: 40 }}>
@@ -90,7 +132,7 @@ export default function AnalyticsPage() {
             <option value="residential">🏢 Жилые здания</option>
             <option value="industrial">🏭 Промышленность</option>
           </select>
-          <button className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button className="btn btn-secondary btn-sm" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Activity size={16} /> Экспорт отчета
           </button>
         </div>

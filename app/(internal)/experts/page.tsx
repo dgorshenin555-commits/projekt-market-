@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { REGIONS } from '@/lib/constants';
+import { useApp } from '@/lib/store';
 import projBg from '@/public/project-buildings.png';
 
 // --- Типы и Моковые данные ---
@@ -120,16 +122,21 @@ const AVATAR_COLORS = [
 ];
 
 export default function ExpertsPage() {
+  const router = useRouter();
+  const { notify } = useApp();
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [serviceFilter, setServiceFilter] = useState('');
   const [activeTab, setActiveTab] = useState('Сводка');
+  const [viewMode, setViewMode] = useState<'list' | 'cards'>('cards');
+  const [certOnly, setCertOnly] = useState(false);
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(MOCK_EXPERTS[0]);
 
   const filtered = MOCK_EXPERTS.filter((e) => {
     if (search && !e.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (regionFilter && e.city !== regionFilter) return false;
     if (serviceFilter && !e.services.includes(serviceFilter)) return false;
+    if (certOnly && !e.accreditation) return false;
     return true;
   });
 
@@ -140,8 +147,8 @@ export default function ExpertsPage() {
       {/* Top filter bar */}
       <div className="dsn-filter-bar">
         <div className="dsn-filter-tabs">
-          <button className="dsn-filter-tab-icon">☰</button>
-          <button className="dsn-filter-tab-icon active">🛡️</button>
+          <button className={`dsn-filter-tab-icon ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="Список">☰</button>
+          <button className={`dsn-filter-tab-icon ${viewMode === 'cards' ? 'active' : ''}`} onClick={() => setViewMode('cards')} title="Карточки">🛡️</button>
           <span className="dsn-filter-divider" />
         </div>
         <select className="dsn-filter-chip" value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)}>
@@ -152,8 +159,8 @@ export default function ExpertsPage() {
           <option value="">🛡️ Тип проверки</option>
           {EXPERTISE_SERVICES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <button className="dsn-filter-chip">📜 Сертификаты</button>
-        <button className="dsn-filter-chip">⚙ Фильтры</button>
+        <button className={`dsn-filter-chip ${certOnly ? 'active' : ''}`} onClick={() => setCertOnly((v) => !v)}>📜 Сертификаты</button>
+        <button className="dsn-filter-chip" onClick={() => notify('Расширенные фильтры — в разработке')}>⚙ Фильтры</button>
       </div>
 
       {/* Main content: 3 column layout */}
@@ -185,7 +192,7 @@ export default function ExpertsPage() {
                 {t}
               </button>
             ))}
-            <button className="dsn-tab">⋯</button>
+            <button className="dsn-tab" onClick={() => notify('Дополнительные вкладки — в разработке')}>⋯</button>
           </div>
 
           {/* Featured card */}
@@ -210,8 +217,8 @@ export default function ExpertsPage() {
                 <span>✅ {featured.reportsCount} заключений</span>
               </div>
               <div className="dsn-featured-actions">
-                <button className="btn btn-secondary btn-sm">Открыть страницу</button>
-                <button className="btn btn-primary btn-sm" style={{ background: 'var(--status-success)', borderColor: 'var(--status-success)' }}>Заказать экспертизу →</button>
+                <button className="btn btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); setSelectedExpert(featured); }}>Открыть страницу</button>
+                <button className="btn btn-primary btn-sm" style={{ background: 'var(--status-success)', borderColor: 'var(--status-success)' }} onClick={(e) => { e.stopPropagation(); router.push('/expertise'); }}>Заказать экспертизу →</button>
               </div>
             </div>
           </div>
@@ -256,7 +263,7 @@ export default function ExpertsPage() {
                   {expert.achievements?.slice(0, 2).map((a, i) => (
                      <span key={i} style={{ fontSize: 11, background: 'var(--bg-secondary)', padding: '4px 8px', borderRadius: 4, color: 'var(--text-muted)' }}>{a}</span>
                   ))}
-                  <button className="dsn-action-btn primary" style={{ background: 'transparent', color: 'var(--status-success)', border: '1px solid var(--status-success)' }}>Выбрать →</button>
+                  <button className="dsn-action-btn primary" style={{ background: 'transparent', color: 'var(--status-success)', border: '1px solid var(--status-success)' }} onClick={(e) => { e.stopPropagation(); setSelectedExpert(expert); }}>Выбрать →</button>
                 </div>
               </div>
             ))}
@@ -288,10 +295,10 @@ export default function ExpertsPage() {
                   {selectedExpert.description}
                 </div>
               )}
-              <button className="btn btn-primary btn-block dsn-contact-btn" style={{ background: 'var(--status-success)', borderColor: 'var(--status-success)' }}>
+              <button className="btn btn-primary btn-block dsn-contact-btn" style={{ background: 'var(--status-success)', borderColor: 'var(--status-success)' }} onClick={() => notify('Сообщения — в разработке')}>
                 Связаться
               </button>
-              <button className="btn btn-secondary btn-block" style={{ marginTop: 8 }}>
+              <button className="btn btn-secondary btn-block" style={{ marginTop: 8 }} onClick={() => notify('Запрос договора — в разработке')}>
                 Запросить договор
               </button>
             </div>
@@ -338,7 +345,7 @@ export default function ExpertsPage() {
                 </div>
               ))}
             </div>
-            <button className="dsn-see-all-btn">Все заключения эксперта →</button>
+            <button className="dsn-see-all-btn" onClick={() => notify('Заключения эксперта — в разработке')}>Все заключения эксперта →</button>
           </div>
         </div>
       </div>

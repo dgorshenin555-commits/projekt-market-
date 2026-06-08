@@ -58,7 +58,7 @@ export default function HomePage() {
                 <path d="M9 12h6" />
               </svg>
             </div>
-            <span style={{ letterSpacing: '2px', fontWeight: 800 }}>КУЛЬМАН</span>
+            <span style={{ letterSpacing: '2px', fontWeight: 800 }}>ФУНКЦИЯ</span>
           </div>
         </div>
 
@@ -79,7 +79,7 @@ export default function HomePage() {
                 <path d="M9 12h6" />
               </svg>
             </div>
-            <span style={{ letterSpacing: '2px', fontWeight: 800 }}>КУЛЬМАН</span>
+            <span style={{ letterSpacing: '2px', fontWeight: 800 }}>ФУНКЦИЯ</span>
           </div>
           <button className="landing-mobile-close" onClick={() => setMenuOpen(false)}>
             <X size={20} />

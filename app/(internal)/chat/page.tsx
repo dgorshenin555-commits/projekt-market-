@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useApp } from '@/lib/store';
 
 // --- Моковые типы и данные ---
 type ChatMessage = {
@@ -88,6 +89,7 @@ const MOCK_CHATS: ChatRoom[] = [
 ];
 
 export default function ChatPage() {
+  const { notify } = useApp();
   const [chats, setChats] = useState<ChatRoom[]>(MOCK_CHATS);
   // На десктопе всегда открыт первый чат по умолчанию
   const [activeChatId, setActiveChatId] = useState<string>(chats[0].id);
@@ -419,10 +421,10 @@ export default function ChatPage() {
             {/* Input Area */}
             <div style={{ padding: '16px 20px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)' }}>
               <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-                <button type="button" style={{ 
-                   width: 44, height: 44, borderRadius: '50%', 
-                   background: 'var(--bg-input)', border: 'none', 
-                   color: 'var(--text-secondary)', fontSize: 20, 
+                <button type="button" onClick={() => notify('Прикрепление файлов — в разработке')} style={{
+                   width: 44, height: 44, borderRadius: '50%',
+                   background: 'var(--bg-input)', border: 'none',
+                   color: 'var(--text-secondary)', fontSize: 20,
                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                    cursor: 'pointer', flexShrink: 0
                 }}>

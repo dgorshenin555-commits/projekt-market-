@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { User, Order, OrderResponse } from './types';
 import { MOCK_ORDERS, MOCK_RESPONSES } from './mock-data';
 
@@ -14,12 +14,15 @@ interface AppContextType extends AppState {
   login: (email: string, password: string) => boolean;
   register: (user: Omit<User, 'id' | 'createdAt'>) => void;
   logout: () => void;
+  updateUser: (patch: Partial<Omit<User, 'id' | 'createdAt'>>) => void;
   addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'responsesCount' | 'customerId' | 'customerName'>) => Order;
   addResponse: (response: Omit<OrderResponse, 'id' | 'createdAt' | 'designerId' | 'designerName' | 'designerCompany'>) => void;
   getOrderById: (id: string) => Order | undefined;
   getResponsesForOrder: (orderId: string) => OrderResponse[];
   getMyOrders: () => Order[];
   getMyResponses: () => OrderResponse[];
+  notice: { id: number; message: string } | null;
+  notify: (message: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -52,6 +55,13 @@ function saveState(state: AppState) {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>({ user: null, orders: MOCK_ORDERS, responses: MOCK_RESPONSES });
   const [mounted, setMounted] = useState(false);
+  const [notice, setNotice] = useState<{ id: number; message: string } | null>(null);
+  const noticeCounter = useRef(0);
+
+  const notify = useCallback((message: string) => {
+    noticeCounter.current += 1;
+    setNotice({ id: noticeCounter.current, message });
+  }, []);
 
   useEffect(() => {
     setState(loadState());
@@ -89,6 +99,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     setState((prev) => ({ ...prev, user: null }));
+  }, []);
+
+  const updateUser = useCallback((patch: Partial<Omit<User, 'id' | 'createdAt'>>) => {
+    setState((prev) => {
+      if (!prev.user) return prev;
+      const updated: User = { ...prev.user, ...patch };
+      if (typeof window !== 'undefined') {
+        const users = JSON.parse(localStorage.getItem('pm_users') || '[]') as User[];
+        const idx = users.findIndex((u) => u.id === updated.id);
+        if (idx >= 0) {
+          users[idx] = updated;
+        } else {
+          users.push(updated);
+        }
+        localStorage.setItem('pm_users', JSON.stringify(users));
+      }
+      return { ...prev, user: updated };
+    });
   }, []);
 
   const addOrder = useCallback((orderData: Omit<Order, 'id' | 'createdAt' | 'responsesCount' | 'customerId' | 'customerName'>) => {
@@ -144,10 +172,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         ...state,
-        login, register, logout,
+        login, register, logout, updateUser,
         addOrder, addResponse,
         getOrderById, getResponsesForOrder,
         getMyOrders, getMyResponses,
+        notice, notify,
       }}
     >
       {children}

@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MOCK_MANUFACTURERS, MOCK_MANUFACTURER_PRODUCTS } from '@/lib/mock-data';
 import { REGIONS } from '@/lib/constants';
 import { Manufacturer } from '@/lib/types';
+import { useApp } from '@/lib/store';
 
 const SECTION_FILTERS = ['АР', 'КР', 'ЭОМ', 'ВК', 'ОВиК', 'ГС', 'ТХ', 'ПБ', 'СС'];
 
@@ -105,6 +107,8 @@ const PRODUCT_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function ManufacturersPage() {
+  const router = useRouter();
+  const { notify } = useApp();
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [sectionFilter, setSectionFilter] = useState('');
@@ -143,8 +147,8 @@ export default function ManufacturersPage() {
           <option value="">📐 Раздел</option>
           {SECTION_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <button className="dsn-filter-chip">🏗 Нормативы</button>
-        <button className="dsn-filter-chip">⚙ Фильтры</button>
+        <button className="dsn-filter-chip" onClick={() => router.push('/standards')}>🏗 Нормативы</button>
+        <button className="dsn-filter-chip" onClick={() => notify('Расширенные фильтры — в разработке')}>⚙ Фильтры</button>
       </div>
 
       {/* Main Grid: 2 columns */}
@@ -192,12 +196,12 @@ export default function ManufacturersPage() {
 
             <div className="mfg-actions">
               {idx === 0 ? (
-                <button className="btn btn-primary" style={{ width: '100%', background: 'linear-gradient(90deg, #8b5cf6, #6d28d9)', border: 'none' }}>Связаться</button>
+                <button className="btn btn-primary" style={{ width: '100%', background: 'linear-gradient(90deg, #8b5cf6, #6d28d9)', border: 'none' }} onClick={(e) => { e.stopPropagation(); notify('Сообщения — в разработке'); }}>Связаться</button>
               ) : (
                 <>
-                  <button className="mfg-btn ghost">Открыть профиль</button>
-                  <button className="mfg-btn ghost">Добавить в проект</button>
-                  <button className="mfg-btn ghost" style={{ marginLeft: 'auto' }}>≡ Заявки</button>
+                  <button className="mfg-btn ghost" onClick={(e) => { e.stopPropagation(); setSelectedMfr(mfg); }}>Открыть профиль</button>
+                  <button className="mfg-btn ghost" onClick={(e) => { e.stopPropagation(); notify('Добавление в проект — в разработке'); }}>Добавить в проект</button>
+                  <button className="mfg-btn ghost" style={{ marginLeft: 'auto' }} onClick={(e) => { e.stopPropagation(); router.push('/orders'); }}>≡ Заявки</button>
                 </>
               )}
             </div>
@@ -229,7 +233,7 @@ export default function ManufacturersPage() {
             </div>
 
             <div className="mfg-actions">
-              <button className="mfg-btn ghost" style={{ width: '100%' }}>Скачать BIM / Открыть →</button>
+              <button className="mfg-btn ghost" style={{ width: '100%' }} onClick={() => notify('Скачивание BIM — в разработке')}>Скачать BIM / Открыть →</button>
             </div>
           </div>
         ))}
@@ -290,8 +294,8 @@ export default function ManufacturersPage() {
               </div>
 
               <div className="mfg-modal-actions">
-                <button className="btn btn-primary" style={{ width: '100%', padding: '14px', background: 'linear-gradient(90deg, #8b5cf6, #6d28d9)' }}>Связаться с производителем</button>
-                <button className="btn btn-secondary" style={{ width: '100%', padding: '14px', marginTop: '12px' }}>Добавить все BIM в проект</button>
+                <button className="btn btn-primary" style={{ width: '100%', padding: '14px', background: 'linear-gradient(90deg, #8b5cf6, #6d28d9)' }} onClick={() => notify('Сообщения — в разработке')}>Связаться с производителем</button>
+                <button className="btn btn-secondary" style={{ width: '100%', padding: '14px', marginTop: '12px' }} onClick={() => notify('Добавление в проект — в разработке')}>Добавить все BIM в проект</button>
               </div>
             </div>
           </div>

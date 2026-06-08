@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useApp } from '@/lib/store';
 import { MOCK_EXPERTISE_REQUESTS, MOCK_EXPERTISE_PROJECTS } from '@/lib/mock-data';
 import { OBJECT_TYPE_LABELS } from '@/lib/constants';
 import Image from 'next/image';
@@ -10,6 +11,7 @@ type TabType = 'marketplace' | 'dashboard';
 type ViewMode = 'list' | 'grid' | 'compact';
 
 export default function ExpertisePage() {
+  const { notify } = useApp();
   const [activeTab, setActiveTab] = useState<TabType>('marketplace');
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -27,7 +29,7 @@ export default function ExpertisePage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700 }}>Экспертиза проектов</h1>
         {activeTab === 'marketplace' && (
-          <button className="btn btn-primary">+ Заказать экспертизу</button>
+          <button className="btn btn-primary" onClick={() => notify('Создание заявки на экспертизу — в разработке')}>+ Заказать экспертизу</button>
         )}
       </div>
 
@@ -86,7 +88,7 @@ export default function ExpertisePage() {
                   <div style={{ width: 120, fontSize: 13, fontWeight: 600 }}>💰 {req.budget || 'По договор.'}</div>
                   <div style={{ width: 100, fontSize: 12, color: 'var(--text-muted)' }}>💬 {req.responsesCount} откл.</div>
                   <div style={{ width: 140 }}>
-                    <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12, width: '100%' }}>Откликнуться</button>
+                    <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12, width: '100%' }} onClick={() => notify('Отклик на экспертизу — в разработке')}>Откликнуться</button>
                   </div>
                 </div>
               );
@@ -168,7 +170,7 @@ export default function ExpertisePage() {
                       </span>
                       откликов
                     </span>
-                    <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: 13, fontWeight: 600 }}>Откликнуться</button>
+                    <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: 13, fontWeight: 600 }} onClick={() => notify('Отклик на экспертизу — в разработке')}>Откликнуться</button>
                   </span>
                 </div>
               </div>
@@ -217,7 +219,7 @@ export default function ExpertisePage() {
                   </span>
                 </div>
                 
-                <button className="btn btn-secondary" style={{ width: '100%', marginTop: 16, justifyContent: 'center' }}>
+                <button className="btn btn-secondary" style={{ width: '100%', marginTop: 16, justifyContent: 'center' }} onClick={() => notify('Журнал замечаний — в разработке')}>
                   Журнал замечаний
                 </button>
               </div>

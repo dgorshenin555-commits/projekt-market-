@@ -3,7 +3,7 @@ import "./globals.css";
 import { AppProvider } from "@/lib/store";
 
 export const metadata: Metadata = {
-  title: "Кульман — Маркетплейс проектирования",
+  title: "Функция — Маркетплейс проектирования",
   description: "Профессиональная платформа для проектировщиков и заказчиков документации.",
 };
 

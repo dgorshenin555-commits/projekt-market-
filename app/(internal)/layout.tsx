@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp } from '@/lib/store';
@@ -33,9 +33,17 @@ const NAV_ITEMS = [
 
 export default function InternalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useApp();
+  const { user, notice } = useApp();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+
+  useEffect(() => {
+    if (!notice) return;
+    setToastVisible(true);
+    const t = setTimeout(() => setToastVisible(false), 2800);
+    return () => clearTimeout(t);
+  }, [notice?.id]);
 
   const toggleSidebar = () => {
     if (window.innerWidth <= 768) {
@@ -69,7 +77,7 @@ export default function InternalLayout({ children }: { children: React.ReactNode
                 <path d="M9 12h6" />
               </svg>
             </div>
-            <span className="sidebar-text" style={{ letterSpacing: '2px', fontWeight: 800 }}>КУЛЬМАН</span>
+            <span className="sidebar-text" style={{ letterSpacing: '2px', fontWeight: 800 }}>ФУНКЦИЯ</span>
           </Link>
           <button 
             className="sidebar-close-btn"
@@ -152,6 +160,37 @@ export default function InternalLayout({ children }: { children: React.ReactNode
           </Link>
         ))}
       </footer>
+
+      {/* Toast-уведомление */}
+      {notice && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            left: '50%',
+            transform: `translateX(-50%) translateY(${toastVisible ? '0' : '24px'})`,
+            opacity: toastVisible ? 1 : 0,
+            pointerEvents: 'none',
+            zIndex: 1000,
+            background: 'var(--bg-secondary, #1e1e2f)',
+            color: 'var(--text-primary, #fff)',
+            border: '1px solid var(--border, rgba(255,255,255,0.1))',
+            borderRadius: 'var(--radius-md, 10px)',
+            padding: '12px 20px',
+            fontSize: 14,
+            fontWeight: 500,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            maxWidth: 'calc(100vw - 32px)',
+            transition: 'opacity 0.25s ease, transform 0.25s ease',
+          }}
+        >
+          <span style={{ fontSize: 16 }}>🛠️</span>
+          {notice.message}
+        </div>
+      )}
     </div>
   );
 }

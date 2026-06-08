@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import { MOCK_DESIGNERS, MOCK_PROJECTS } from '@/lib/mock-data';
+import { useApp } from '@/lib/store';
 
 const TABS = ['Обзор', 'Портфолио', 'Отзывы', 'Документы и СРО'];
 
@@ -17,6 +18,7 @@ const AVATAR_COLORS = [
 export default function DesignerProfilePage() {
   const params = useParams();
   const router = useRouter();
+  const { notify } = useApp();
   const id = params?.id as string;
   const [activeTab, setActiveTab] = useState('Обзор');
 
@@ -117,10 +119,10 @@ export default function DesignerProfilePage() {
               </div>
               
               <div style={{ display: 'flex', gap: 12 }}>
-                <button className="btn btn-secondary">
+                <button className="btn btn-secondary" onClick={() => notify('Сообщения — в разработке')}>
                   💬 Написать
                 </button>
-                <button className="btn btn-primary">
+                <button className="btn btn-primary" onClick={() => notify('Приглашение в проект — в разработке')}>
                   🚀 Пригласить в проект
                 </button>
               </div>
@@ -183,7 +185,7 @@ export default function DesignerProfilePage() {
                    </div>
                    
                    <div>
-                     <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Достижения на Кульман</h4>
+                     <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Достижения на Функции</h4>
                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                        {(designer.achievements?.length ? designer.achievements : ['Проверенный профиль', 'Быстрый отклик', '+10 проектов за квартал']).map((ach, i) => (
                          <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>
@@ -268,7 +270,7 @@ export default function DesignerProfilePage() {
                            <div style={{ fontSize: 14, fontWeight: 500 }}>Выписка_СРО_2026.pdf</div>
                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>PDF • 1.2 MB</div>
                          </div>
-                         <button className="btn btn-secondary btn-sm" style={{ padding: '6px 12px' }}>Скачать</button>
+                         <button className="btn btn-secondary btn-sm" style={{ padding: '6px 12px' }} onClick={() => notify('Скачивание файла — в разработке')}>Скачать</button>
                        </div>
                      ))}
                    </div>

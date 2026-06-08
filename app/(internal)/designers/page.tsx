@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MOCK_DESIGNERS, MOCK_PROJECTS } from '@/lib/mock-data';
 import { Designer } from '@/lib/types';
 import { REGIONS } from '@/lib/constants';
+import { useApp } from '@/lib/store';
 import projBg from '@/public/project-buildings.png';
 
 const TABS = ['Лайтпр', 'Заявки', 'СРО', 'Проекты'];
@@ -22,16 +24,21 @@ const AVATAR_COLORS = [
 ];
 
 export default function DesignersPage() {
+  const router = useRouter();
+  const { notify } = useApp();
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [sectionFilter, setSectionFilter] = useState('');
   const [activeTab, setActiveTab] = useState('Лайтпр');
+  const [viewMode, setViewMode] = useState<'list' | 'compact' | 'cards'>('cards');
+  const [sroOnly, setSroOnly] = useState(false);
   const [selectedDesigner, setSelectedDesigner] = useState<Designer | null>(MOCK_DESIGNERS[1]);
 
   const filtered = MOCK_DESIGNERS.filter((d) => {
     if (search && !d.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (regionFilter && d.city !== regionFilter) return false;
     if (sectionFilter && !d.sections.includes(sectionFilter)) return false;
+    if (sroOnly && !d.sroNumber) return false;
     return true;
   });
 
@@ -42,9 +49,9 @@ export default function DesignersPage() {
       {/* Top filter bar */}
       <div className="dsn-filter-bar">
         <div className="dsn-filter-tabs">
-          <button className="dsn-filter-tab-icon">☰</button>
-          <button className="dsn-filter-tab-icon">📋</button>
-          <button className="dsn-filter-tab-icon active">👤</button>
+          <button className={`dsn-filter-tab-icon ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="Список">☰</button>
+          <button className={`dsn-filter-tab-icon ${viewMode === 'compact' ? 'active' : ''}`} onClick={() => setViewMode('compact')} title="Компактно">📋</button>
+          <button className={`dsn-filter-tab-icon ${viewMode === 'cards' ? 'active' : ''}`} onClick={() => setViewMode('cards')} title="Карточки">👤</button>
           <span className="dsn-filter-divider" />
         </div>
         <select className="dsn-filter-chip" value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)}>
@@ -55,8 +62,8 @@ export default function DesignersPage() {
           <option value="">📐 Раздел</option>
           {SECTION_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <button className="dsn-filter-chip">🏛️ СРО</button>
-        <button className="dsn-filter-chip">⚙ Фильтры</button>
+        <button className={`dsn-filter-chip ${sroOnly ? 'active' : ''}`} onClick={() => setSroOnly((v) => !v)}>🏛️ СРО</button>
+        <button className="dsn-filter-chip" onClick={() => notify('Расширенные фильтры — в разработке')}>⚙ Фильтры</button>
       </div>
 
       {/* Main content: 3 column layout */}
@@ -88,7 +95,7 @@ export default function DesignersPage() {
                 {t}
               </button>
             ))}
-            <button className="dsn-tab">⋯</button>
+            <button className="dsn-tab" onClick={() => notify('Дополнительные вкладки — в разработке')}>⋯</button>
           </div>
 
           {/* Featured card */}
@@ -113,8 +120,8 @@ export default function DesignersPage() {
                 <span>📁 {featured.projectsCount} проектов</span>
               </div>
               <div className="dsn-featured-actions">
-                <button className="btn btn-secondary btn-sm">Открыть профиль</button>
-                <button className="btn btn-secondary btn-sm">Добавить в проект →</button>
+                <button className="btn btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); router.push(`/designers/${featured.id}`); }}>Открыть профиль</button>
+                <button className="btn btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); notify('Добавление в проект — в разработке'); }}>Добавить в проект →</button>
               </div>
             </div>
           </div>
@@ -155,9 +162,9 @@ export default function DesignersPage() {
                 </div>
                 <div className="dsn-card-actions">
                   {designer.achievements?.slice(0, 1).map((a, i) => (
-                    <button key={i} className="dsn-action-btn ghost">{a}</button>
+                    <span key={i} className="dsn-action-btn ghost">{a}</span>
                   ))}
-                  <button className="dsn-action-btn primary">Выбрать →</button>
+                  <button className="dsn-action-btn primary" onClick={(e) => { e.stopPropagation(); router.push(`/designers/${designer.id}`); }}>Выбрать →</button>
                 </div>
               </div>
             ))}
@@ -188,7 +195,7 @@ export default function DesignersPage() {
               {selectedDesigner.phone && (
                 <div className="dsn-profile-detail">📱 {selectedDesigner.phone}</div>
               )}
-              <button className="btn btn-accent btn-block dsn-contact-btn">Связаться</button>
+              <button className="btn btn-accent btn-block dsn-contact-btn" onClick={() => notify('Сообщения — в разработке')}>Связаться</button>
             </div>
           )}
 
@@ -211,7 +218,7 @@ export default function DesignersPage() {
               <div>📌 3 года стажа в проектировании</div>
               <div>📌 Первые места в конкурсах</div>
             </div>
-            <button className="dsn-see-all-btn">Смотреть все →</button>
+            <button className="dsn-see-all-btn" onClick={() => notify('Подробная статистика региона — в разработке')}>Смотреть все →</button>
           </div>
 
           {/* Recent projects */}
@@ -237,7 +244,7 @@ export default function DesignersPage() {
               <span>67 проектов</span>
               <span>📁 17 проектов</span>
             </div>
-            <button className="dsn-see-all-btn">Добавить в проект →</button>
+            <button className="dsn-see-all-btn" onClick={() => notify('Добавление в проект — в разработке')}>Добавить в проект →</button>
           </div>
         </div>
       </div>

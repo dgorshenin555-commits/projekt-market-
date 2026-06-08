@@ -49,7 +49,7 @@ export default function AuthPage() {
               <rect x="14" y="6" width="4" height="10" rx="1" fill="#6d28d9"/>
             </svg>
           </div>
-          <span style={{ fontWeight: 700, fontSize: 18 }}>Проектирование</span>
+          <span style={{ fontWeight: 700, fontSize: 18 }}>Функция</span>
         </Link>
 
         <h1>{isLogin ? 'Вход в систему' : 'Регистрация'}</h1>

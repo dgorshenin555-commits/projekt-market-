@@ -19,7 +19,7 @@ const TIMELINE_STEPS = [
 
 function OrderDetailContent() {
   const searchParams = useSearchParams();
-  const { getOrderById, getResponsesForOrder, user, addResponse } = useApp();
+  const { getOrderById, getResponsesForOrder, user, addResponse, notify } = useApp();
   const [activeTab, setActiveTab] = useState('Описание');
   const [responseText, setResponseText] = useState('');
   const [propBudget, setPropBudget] = useState('');
@@ -62,7 +62,7 @@ function OrderDetailContent() {
           <span className="status-badge" style={{ color: status.color, background: `${status.color}16` }}>
             {status.label}
           </span>
-          <button className="btn btn-secondary btn-sm">💬 Обсудить</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => notify('Сообщения — в разработке')}>💬 Обсудить</button>
         </div>
       </div>
 
@@ -291,7 +291,7 @@ function OrderDetailContent() {
                 </div>
               </div>
             </div>
-            <button className="btn btn-accent btn-block" style={{ marginTop: 8 }}>Связаться</button>
+            <button className="btn btn-accent btn-block" style={{ marginTop: 8 }} onClick={() => notify('Сообщения — в разработке')}>Связаться</button>
           </div>
 
           {/* Required specialists list */}
