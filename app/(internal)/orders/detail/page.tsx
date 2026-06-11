@@ -15,12 +15,8 @@ import '../../../_orders/orders.css';
 
 const TABS = ['Описание', 'Проектировщики', 'Коммуникации', 'Замечания', 'Файлы'];
 
-const TIMELINE = [
-  { label: 'Принята в работу', done: true },
-  { label: 'Назначены проектировщики', done: false },
-  { label: 'Передана на экспертизу', done: false },
-  { label: 'Закрыта', done: false },
-];
+const TIMELINE_LABELS = ['Принята в работу', 'Назначены проектировщики', 'Передана на экспертизу', 'Закрыта'];
+const timelineDone = (o) => o.status === 'completed' ? 4 : (o.status === 'in_progress' || o.assignedDesignerId) ? 2 : 1;
 
 /* --- демо-данные для вкладок без бэкенда (прототип) --- */
 const DEMO_MESSAGES = [
@@ -43,11 +39,12 @@ const DEMO_FILES = [
 ];
 
 const initials = (s) => (s || '').replace(/[^А-ЯA-Zа-яa-z]/g, '').slice(0, 2).toUpperCase() || 'ЗК';
+const isValidBudget = (v) => { const n = parseInt(String(v).replace(/\D/g, ''), 10); return !!n && n > 0; };
 
 function OrderDetailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { getOrderById, getResponsesForOrder, user, addResponse, notify } = useApp();
+  const { getOrderById, getResponsesForOrder, user, addResponse, hasResponded, selectExecutor, notify } = useApp();
   const [tab, setTab] = useState('Описание');
   const [responseText, setResponseText] = useState('');
   const [propBudget, setPropBudget] = useState('');
@@ -55,6 +52,9 @@ function OrderDetailContent() {
   const orderId = searchParams.get('id');
   const o = orderId ? getOrderById(orderId) : null;
   const responses = o ? getResponsesForOrder(o.id) : [];
+  const isOwner = !!(user && o && user.id === o.customerId);
+  const isDesigner = user?.role === 'designer';
+  const alreadyResponded = !!(o && hasResponded(o.id));
 
   if (!o) {
     return (
@@ -70,10 +70,21 @@ function OrderDetailContent() {
 
   const handleSubmitResponse = () => {
     if (!responseText.trim() || !user) return;
-    addResponse({ orderId: o.id, message: responseText, proposedBudget: propBudget || undefined });
+    if (propBudget.trim() && !isValidBudget(propBudget)) { notify('Предлагаемый бюджет укажите числом'); return; }
+    const ok = addResponse({
+      orderId: o.id,
+      message: responseText,
+      proposedBudget: propBudget.trim() ? `${propBudget.replace(/\D/g, '')} ₽` : undefined,
+    });
+    if (!ok) { notify('Вы уже откликнулись на эту заявку'); return; }
     setResponseText('');
     setPropBudget('');
     notify('Отклик отправлен');
+  };
+
+  const handleSelectExecutor = (r) => {
+    selectExecutor(o.id, r.designerId, r.designerName);
+    notify(`Исполнитель выбран: ${r.designerName}`);
   };
 
   const hero = typeImage(o.objectType);
@@ -110,19 +121,35 @@ function OrderDetailContent() {
               </span>
               <div className="row gap8">
                 <button className="btn btn-ghost btn-sm" onClick={() => router.push('/designers')}>Профиль</button>
-                <button className="btn btn-primary btn-sm" onClick={() => notify('Выбор исполнителя — в разработке')}>Выбрать <Icon name="arrowRight" size={14} /></button>
+                {isOwner && (
+                  o.assignedDesignerId === r.designerId
+                    ? <button className="btn btn-sm" disabled style={{ opacity: 0.75, background: 'var(--accent-soft)', color: 'var(--green)' }}><Icon name="check" size={14} /> Выбран</button>
+                    : !o.assignedDesignerId
+                      ? <button className="btn btn-primary btn-sm" onClick={() => handleSelectExecutor(r)}>Выбрать <Icon name="arrowRight" size={14} /></button>
+                      : null
+                )}
               </div>
             </div>
           </div>
         ))}
 
-        {user && user.role === 'designer' && (
-          <div className="card">
-            <h3 className="section-title" style={{ marginBottom: 14 }}>Оставить отклик</h3>
-            <div className="field"><textarea className="input" style={{ minHeight: 90, resize: 'vertical' }} placeholder="Опишите ваш опыт и предложение…" value={responseText} onChange={(e) => setResponseText(e.target.value)} /></div>
-            <div className="field" style={{ marginTop: 12 }}><input className="input" placeholder="Предлагаемый бюджет (необязательно)" value={propBudget} onChange={(e) => setPropBudget(e.target.value)} /></div>
-            <button className="btn btn-primary mt16" onClick={handleSubmitResponse} disabled={!responseText.trim()}>Отправить отклик</button>
-          </div>
+        {isDesigner && !isOwner && (
+          alreadyResponded ? (
+            <div className="card" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <Icon name="checkCircle" size={18} style={{ color: 'var(--green)' }} />
+              <span className="muted" style={{ fontSize: 14 }}>Вы уже откликнулись на эту заявку.</span>
+            </div>
+          ) : (
+            <div className="card">
+              <h3 className="section-title" style={{ marginBottom: 14 }}>Оставить отклик</h3>
+              <div className="field"><textarea className="input" style={{ minHeight: 90, resize: 'vertical' }} placeholder="Опишите ваш опыт и предложение…" value={responseText} onChange={(e) => setResponseText(e.target.value)} /></div>
+              <div className="field" style={{ marginTop: 12 }}>
+                <input className="input" inputMode="numeric" placeholder="Предлагаемый бюджет, ₽ (необязательно)" value={propBudget} onChange={(e) => setPropBudget(e.target.value.replace(/[^\d\s]/g, ''))} />
+                {propBudget.trim() && !isValidBudget(propBudget) && <span style={{ fontSize: 11, color: 'var(--red)', marginTop: 4, display: 'block' }}>Введите сумму числом</span>}
+              </div>
+              <button className="btn btn-primary mt16" onClick={handleSubmitResponse} disabled={!responseText.trim()}>Отправить отклик</button>
+            </div>
+          )
         )}
       </div>
     );
@@ -211,13 +238,16 @@ function OrderDetailContent() {
         <div className="card">
           <h3 className="section-title" style={{ marginBottom: 22 }}>Таймлайн работы</h3>
           <div className="timeline">
-            {TIMELINE.map((s, i) => (
-              <div key={s.label} className={'tl' + (s.done ? ' tl--done' : '')}>
-                <div className="tl__dot">{s.done && <Icon name="check" size={13} />}</div>
-                {i < TIMELINE.length - 1 && <div className="tl__line" />}
-                <div className="tl__label">{s.label}</div>
-              </div>
-            ))}
+            {TIMELINE_LABELS.map((label, i) => {
+              const done = i < timelineDone(o);
+              return (
+                <div key={label} className={'tl' + (done ? ' tl--done' : '')}>
+                  <div className="tl__dot">{done && <Icon name="check" size={13} />}</div>
+                  {i < TIMELINE_LABELS.length - 1 && <div className="tl__line" />}
+                  <div className="tl__label">{label}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </>
@@ -266,14 +296,29 @@ function OrderDetailContent() {
                 <div className="dim" style={{ fontSize: 13 }}>{o.region}</div>
               </div>
             </div>
-            <button className="btn btn-primary btn-block" onClick={() => notify('Сообщения — в разработке')}>Связаться</button>
+            {isOwner
+              ? <div className="dim" style={{ fontSize: 13, textAlign: 'center', padding: '4px 0' }}>Это ваша заявка</div>
+              : <button className="btn btn-primary btn-block" onClick={() => notify('Сообщения — в разработке')}>Связаться</button>}
           </div>
+
+          {o.assignedDesignerName && (
+            <div className="card">
+              <div className="dim" style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Исполнитель</div>
+              <div className="row gap12">
+                <Avatar text={initials(o.assignedDesignerName)} size={40} />
+                <div>
+                  <div style={{ fontWeight: 700 }}>{o.assignedDesignerName}</div>
+                  <div className="dim" style={{ fontSize: 12.5 }}>Назначен по заявке</div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="card">
             <h3 className="section-title" style={{ fontSize: 16, marginBottom: 6 }}>Требуются специалисты</h3>
             <div className="team">
               {team.map((t, i) => (
-                <div key={t + i} className="team__row" onClick={() => router.push('/designers')}>
+                <div key={t + i} className="team__row" onClick={() => router.push('/designers?spec=' + encodeURIComponent(t))}>
                   <div className="team__ava"><Icon name="user" size={15} /></div>
                   <span>{t}</span>
                   <Icon name="chevR" size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />

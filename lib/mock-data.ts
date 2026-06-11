@@ -163,7 +163,7 @@ export const MOCK_DESIGNERS: Designer[] = [
     id: 'dsn1',
     name: 'Олег Соколов',
     type: 'person',
-    sections: ['АР', 'АР'],
+    sections: ['АР'],
     city: 'Санкт-Петербург',
     sroNumber: 'СРО ООО «Альфа-Проект»',
     rating: 4.6,
@@ -225,7 +225,7 @@ export const MOCK_DESIGNERS: Designer[] = [
     id: 'dsn5',
     name: 'АрхПроект Строй',
     type: 'company',
-    sections: ['КР', 'КР'],
+    sections: ['КР', 'АР'],
     city: 'Санкт-Петербург',
     sroNumber: 'СРО ППЦ-02-467',
     rating: 4.7,
@@ -286,10 +286,10 @@ export const MOCK_DESIGNERS: Designer[] = [
 
 // === Последние проекты ===
 export const MOCK_PROJECTS: DesignerProject[] = [
-  { id: 'prj1', title: 'ЖК Ренессанс', location: 'Санкт-Петербург', projectsCount: 67 },
-  { id: 'prj2', title: 'МФК Старый город', location: 'Кол инженер каналы России', projectsCount: 17 },
-  { id: 'prj3', title: 'Торговый центр', location: 'Москва', projectsCount: 42 },
-  { id: 'prj4', title: 'Присанких центр', location: 'Новосибирск', projectsCount: 23 },
+  { id: 'prj1', title: 'ЖК «Ренессанс»', location: 'Санкт-Петербург', projectsCount: 67 },
+  { id: 'prj2', title: 'МФК «Старый город»', location: 'Казань', projectsCount: 17 },
+  { id: 'prj3', title: 'ТЦ «Галерея»', location: 'Москва', projectsCount: 42 },
+  { id: 'prj4', title: 'БЦ «Высота»', location: 'Новосибирск', projectsCount: 23 },
 ];
 
 // === Производители и Решения ===

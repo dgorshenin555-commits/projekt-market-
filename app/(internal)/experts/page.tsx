@@ -167,7 +167,7 @@ export default function ExpertsPage() {
       <div className="dsn-layout">
         {/* Left column: Title + search + list */}
         <div className="dsn-main">
-          <h1 className="dsn-title">Экспертиза проектов<br />и BIM-контроль</h1>
+          <h1 className="dsn-title">Экспертиза проектов{' '}<br />и BIM-контроль</h1>
 
           {/* Search */}
           <div className="dsn-search-wrapper">

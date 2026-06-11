@@ -13,10 +13,13 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 import { REGIONS, getSections } from '@/lib/constants';
 import { Icon } from '../../../_orders/icons';
-import { typeImage } from '../../../_orders/shared';
+import { typeImage, formatDeadline } from '../../../_orders/shared';
 import '../../../_orders/orders.css';
 
 const STEPS = ['Тип объекта', 'Регион и стадия', 'Разделы', 'Бюджет и сроки', 'Файлы'];
+
+// Бюджет валиден, если это положительное число (BUG-009).
+const isValidBudget = (v) => { const n = parseInt(String(v).replace(/\D/g, ''), 10); return !!n && n > 0; };
 
 const TYPE_CARDS = [
   ['commercial', 'building', 'Коммерческая недвижимость', 'Офисы, ТЦ, склады, гостиницы'],
@@ -75,12 +78,20 @@ export default function NewOrderPage() {
 
   const toggle = (code) => setSel((p) => (p.includes(code) ? p.filter((x) => x !== code) : [...p, code]));
 
-  const filled = [objectType, region && stage, sel.length, (byOffer || budget || due) ? 1 : 0, files].filter(Boolean).length;
+  // Счётчик готовности 0..5 — отражает реально заполненные секции (BUG-011).
+  const filled = [
+    !!objectType && !!title.trim(),
+    !!region && !!stage && !!scale,
+    sel.length > 0,
+    byOffer || isValidBudget(budget) || !!due,
+    files > 0 || step >= 4,
+  ].filter(Boolean).length;
   const exempt = objectType === 'private';
 
   const canNext = () => {
     if (step === 0) return !!objectType && !!title.trim();
     if (step === 2) return sel.length > 0;
+    if (step === 3) return byOffer || isValidBudget(budget); // бюджет обязателен, если не «ждём предложений» (BUG-009)
     return true;
   };
 
@@ -95,7 +106,7 @@ export default function NewOrderPage() {
       stage,
       sections: sel,
       specialists,
-      budget: byOffer ? 'Ждём предложений' : (budget.trim() || 'По договорённости'),
+      budget: byOffer ? 'Ждём предложений' : (budget.trim() ? `${budget.trim()} ₽` : 'По договорённости'),
       deadline: due.trim() || undefined,
       status: 'published',
     });
@@ -199,8 +210,11 @@ export default function NewOrderPage() {
 
           {step === 3 && <div className="col gap18 fade-in">
             <h3 className="section-title">Бюджет и сроки</h3>
-            <div className="field"><label>Бюджет, ₽</label><input className="input" placeholder="12 000 000" value={budget} disabled={byOffer} style={{ opacity: byOffer ? 0.5 : 1 }} onChange={(e) => setBudget(e.target.value)} /></div>
-            <div className="field"><label>Срок выполнения</label><input className="input" placeholder="01.09.2026" value={due} onChange={(e) => setDue(e.target.value)} /></div>
+            <div className="field"><label>Бюджет, ₽</label>
+              <input className="input" inputMode="numeric" placeholder="12 000 000" value={budget} disabled={byOffer} style={{ opacity: byOffer ? 0.5 : 1 }} onChange={(e) => setBudget(e.target.value.replace(/[^\d\s]/g, ''))} />
+              {!byOffer && budget.trim() && !isValidBudget(budget) && <span style={{ fontSize: 11, color: 'var(--red)', marginTop: 4, display: 'block' }}>Введите сумму числом</span>}
+            </div>
+            <div className="field"><label>Срок выполнения</label><input className="input" type="date" min="2026-06-11" value={due} onChange={(e) => setDue(e.target.value)} /></div>
             <label className="row gap10" style={{ fontSize: 14, cursor: 'pointer' }}><input type="checkbox" checked={byOffer} onChange={(e) => setByOffer(e.target.checked)} /> Ждём предложений по цене</label>
           </div>}
 
@@ -242,7 +256,7 @@ export default function NewOrderPage() {
                 </div>
               </div>
             )}
-            {(budget || due || byOffer) && <PrevRow icon="calendar" label="Срок" value={due || 'по согласованию'} hot={step === 3} />}
+            {(budget || due || byOffer) && <PrevRow icon="calendar" label="Срок" value={formatDeadline(due)} hot={step === 3} />}
             {files > 0 && <PrevRow icon="paperclip" label="Файлы" value={files + ' шт.'} hot={step === 4} />}
           </div>
 

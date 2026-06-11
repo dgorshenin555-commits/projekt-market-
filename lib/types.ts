@@ -7,6 +7,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  password?: string;
   company?: string;
   phone?: string;
   avatar?: string;
@@ -56,6 +57,8 @@ export interface Order {
   deadline?: string;
   status: OrderStatus;
   responsesCount: number;
+  assignedDesignerId?: string;
+  assignedDesignerName?: string;
   createdAt: string;
 }
 

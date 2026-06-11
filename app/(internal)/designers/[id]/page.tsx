@@ -1,12 +1,19 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MOCK_DESIGNERS, MOCK_PROJECTS } from '@/lib/mock-data';
 import { useApp } from '@/lib/store';
 
 const TABS = ['Обзор', 'Портфолио', 'Отзывы', 'Документы и СРО'];
+
+const SHORTLIST_KEY = 'pm_shortlist';
+
+// Уникальные разделы (защита от дублей в данных — BUG-014).
+function uniqueSections(sections: string[]): string[] {
+  return Array.from(new Set(sections));
+}
 
 const AVATAR_COLORS = [
   'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -21,9 +28,34 @@ export default function DesignerProfilePage() {
   const { notify } = useApp();
   const id = params?.id as string;
   const [activeTab, setActiveTab] = useState('Обзор');
+  const [inShortlist, setInShortlist] = useState(false);
 
   // Ищем дизайнера по ID, или берем первого как фолбек (на случай перезагрузки страницы)
   const designer = MOCK_DESIGNERS.find(d => d.id === id) || MOCK_DESIGNERS[0];
+
+  // Инициализация состояния шортлиста из localStorage (BUG-016) —
+  // в useEffect, чтобы не было SSR-mismatch.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(SHORTLIST_KEY) || '[]');
+      if (Array.isArray(saved)) setInShortlist(saved.includes(designer.id));
+    } catch {}
+  }, [designer.id]);
+
+  const toggleShortlist = () => {
+    if (typeof window === 'undefined') return;
+    let saved: string[] = [];
+    try {
+      const parsed = JSON.parse(localStorage.getItem(SHORTLIST_KEY) || '[]');
+      if (Array.isArray(parsed)) saved = parsed.filter((x): x is string => typeof x === 'string');
+    } catch {}
+    const isIn = saved.includes(designer.id);
+    const next = isIn ? saved.filter((x) => x !== designer.id) : [...saved, designer.id];
+    localStorage.setItem(SHORTLIST_KEY, JSON.stringify(next));
+    setInShortlist(!isIn);
+    notify(isIn ? 'Убрано из проекта' : 'Добавлено в проект');
+  };
 
   if (!designer) {
     return (
@@ -112,18 +144,21 @@ export default function DesignerProfilePage() {
                 </div>
 
                 <div className="dsn-featured-sections" style={{ marginTop: 0 }}>
-                  {designer.sections.map((s, i) => (
-                    <span key={i} className="dsn-section-tag accent" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>{s}</span>
+                  {uniqueSections(designer.sections).map((s) => (
+                    <span key={s} className="dsn-section-tag accent" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>{s}</span>
                   ))}
                 </div>
               </div>
-              
+
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="btn btn-secondary" onClick={() => notify('Сообщения — в разработке')}>
                   💬 Написать
                 </button>
-                <button className="btn btn-primary" onClick={() => notify('Приглашение в проект — в разработке')}>
-                  🚀 Пригласить в проект
+                <button
+                  className={inShortlist ? 'btn btn-secondary' : 'btn btn-primary'}
+                  onClick={toggleShortlist}
+                >
+                  {inShortlist ? '✓ В проекте' : '🚀 Пригласить в проект'}
                 </button>
               </div>
             </div>

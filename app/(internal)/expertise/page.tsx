@@ -29,7 +29,10 @@ export default function ExpertisePage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700 }}>Экспертиза проектов</h1>
         {activeTab === 'marketplace' && (
-          <button className="btn btn-primary" onClick={() => notify('Создание заявки на экспертизу — в разработке')}>+ Заказать экспертизу</button>
+          <button className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }} onClick={() => notify('Создание заявки на экспертизу появится в ближайшем обновлении')}>
+            + Заказать экспертизу
+            <span className="exp-soon-badge">Скоро</span>
+          </button>
         )}
       </div>
 
@@ -227,6 +230,23 @@ export default function ExpertisePage() {
           })}
         </div>
       )}
+
+      <style dangerouslySetInnerHTML={{__html:`
+        .exp-soon-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 1px 6px;
+          font-size: 9px;
+          font-weight: 700;
+          line-height: 1.4;
+          letter-spacing: 0.02em;
+          text-transform: uppercase;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.22);
+          color: #fff;
+          white-space: nowrap;
+        }
+      `}}/>
     </div>
   );
 }

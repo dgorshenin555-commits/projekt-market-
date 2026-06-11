@@ -5,9 +5,46 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useApp } from '@/lib/store';
 import { Icon, FuncMark } from './_landing/icons';
 import { Mascots } from './_landing/characters';
 import './_landing/landing.css';
+
+// Лёгкий тост для лендинга: ссылки-заглушки и подписка дают мягкий фидбек без перехода по «#».
+// Используем простой event-bus на window, чтобы не тащить контекст через все компоненты витрины.
+function landingToast(message) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('fn-landing-toast', { detail: message }));
+}
+
+function LandingToast() {
+  const [msg, setMsg] = React.useState(null);
+  const timer = React.useRef(null);
+  React.useEffect(() => {
+    const onToast = (e) => {
+      setMsg(e.detail);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setMsg(null), 2600);
+    };
+    window.addEventListener('fn-landing-toast', onToast);
+    return () => { window.removeEventListener('fn-landing-toast', onToast); if (timer.current) clearTimeout(timer.current); };
+  }, []);
+  return (
+    <div
+      aria-live="polite"
+      style={{
+        position: 'fixed', left: '50%', bottom: 28, transform: `translateX(-50%) translateY(${msg ? 0 : 12}px)`,
+        background: 'rgba(17,20,28,.92)', color: '#fff', border: '1px solid rgba(255,255,255,.12)',
+        padding: '12px 20px', borderRadius: 12, fontSize: 14, fontWeight: 500, zIndex: 9999,
+        boxShadow: '0 12px 40px rgba(0,0,0,.45)', backdropFilter: 'blur(8px)',
+        opacity: msg ? 1 : 0, pointerEvents: 'none', transition: 'opacity .25s ease, transform .25s ease',
+        maxWidth: 'calc(100vw - 32px)',
+      }}
+    >
+      {msg}
+    </div>
+  );
+}
 
 // Карта грузится только на клиенте: maplibre-gl обращается к window и несовместим с SSR/prerender.
 const RegionMap = dynamic(() => import('./_landing/RegionMap').then(m => m.RegionMap), { ssr: false });
@@ -15,7 +52,11 @@ const RegionMap = dynamic(() => import('./_landing/RegionMap').then(m => m.Regio
 function Nav({ go }) {
   const [open, setOpen] = React.useState(false);
   const [pill, setPill] = React.useState({ left: 0, width: 0, opacity: 0 });
+  const { user, hydrated } = useApp();
+  // До гидрации показываем гостевой вариант, чтобы серверный и клиентский HTML совпадали (без SSR-mismatch).
+  const authed = hydrated && !!user;
   const auth = () => go && go('auth');
+  const dashboard = () => go && go('dashboard');
   const jump = (href) => (e) => {
     if (href && href.length > 1 && href[0] === '#') {
       e.preventDefault();
@@ -35,8 +76,17 @@ function Nav({ go }) {
           <span className="tl-navpill" style={{ left: pill.left, width: pill.width, opacity: pill.opacity }} />
         </nav>
         <div className="tl-navbtns">
-          <button className="tl-btn tl-btn--ghost" onClick={auth}>Войти</button>
-          <button className="tl-btn tl-btn--solid" onClick={auth}>Регистрация</button>
+          {authed ? (
+            <>
+              <span className="tl-navuser" style={{ color: '#cbd5e1', fontSize: 14, fontWeight: 500, alignSelf: 'center', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
+              <button className="tl-btn tl-btn--solid" onClick={dashboard}>Кабинет</button>
+            </>
+          ) : (
+            <>
+              <button className="tl-btn tl-btn--ghost" onClick={auth}>Войти</button>
+              <button className="tl-btn tl-btn--solid" onClick={auth}>Регистрация</button>
+            </>
+          )}
         </div>
         <button className="tl-burger" aria-label="Меню" onClick={() => setOpen(o => !o)}>
           <Icon name={open ? 'x' : 'menu'} size={24} />
@@ -46,8 +96,17 @@ function Nav({ go }) {
         <div className="tl-mobile">
           {links.map(([l, h]) => <a key={l} href={h} onClick={jump(h)}>{l}</a>)}
           <div className="tl-mobile__btns">
-            <button className="tl-btn tl-btn--ghost" onClick={auth}>Войти</button>
-            <button className="tl-btn tl-btn--solid" onClick={auth}>Регистрация</button>
+            {authed ? (
+              <>
+                <span className="tl-navuser" style={{ color: '#cbd5e1', fontSize: 14, fontWeight: 500, padding: '8px 2px' }}>{user.name}</span>
+                <button className="tl-btn tl-btn--solid" onClick={() => { setOpen(false); dashboard(); }}>Кабинет</button>
+              </>
+            ) : (
+              <>
+                <button className="tl-btn tl-btn--ghost" onClick={() => { setOpen(false); auth(); }}>Войти</button>
+                <button className="tl-btn tl-btn--solid" onClick={() => { setOpen(false); auth(); }}>Регистрация</button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -478,7 +537,7 @@ function Hero({ go }) {
         <button className="tl-hbtn tl-hbtn--primary" onClick={() => go && go('order-new')}><Icon name="plus" size={15} /> Разместить заявку</button>
         <button className="tl-hbtn tl-hbtn--pink" onClick={() => go && go('auth')}><Icon name="search" size={15} /> Найти заказы</button>
       </div>
-      <h1 className="tl-title">Платформа для проектирования,<br />экспертизы и подбора решений</h1>
+      <h1 className="tl-title">Платформа для проектирования, <br />экспертизы и подбора решений</h1>
       <p className="tl-sub">Публикуйте заявки, находите проектировщиков, проходите экспертизу и работайте с нормативами — в одной системе.</p>
       <PromptBox go={go} />
 
@@ -800,6 +859,7 @@ function AnimatedSocials() {
     <div className="tl-soc">
       {socials.map(([name, ic, c]) => (
         <a key={name} href="#" className={'tl-soc__item' + (hover && hover !== name ? ' is-dim' : '')}
+          onClick={(e) => { e.preventDefault(); landingToast('Раздел скоро появится'); }}
           onMouseEnter={() => setHover(name)} onMouseLeave={() => setHover(null)}>
           <span className="tl-soc__name">{name}</span>
           <span className={'tl-soc__pop' + (hover === name ? ' is-on' : '')} style={{ color: c }}><Icon name={ic} size={26} /></span>
@@ -810,16 +870,45 @@ function AnimatedSocials() {
 }
 
 function Footer() {
+  const [email, setEmail] = React.useState('');
+  const [subscribed, setSubscribed] = React.useState(false);
+  const [error, setError] = React.useState(false);
+  const subscribe = (e) => {
+    e.preventDefault();
+    // Базовая фронтовая валидация email.
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    if (!ok) { setError(true); return; }
+    setError(false);
+    setSubscribed(true);
+    setEmail('');
+  };
+  // Ссылка-заглушка: не прыгает на «#», даёт мягкий фидбек.
+  const soon = (e) => { e.preventDefault(); landingToast('Раздел скоро появится'); };
   return (
     <footer className="tl-foot">
       <div className="tl-foot__grid">
         <div className="tl-foot__sub">
           <div className="tl-brand" style={{ marginBottom: 14 }}><FuncMark size={26} /> <span className="tl-shimmer">ФУНКЦИЯ</span></div>
           <p className="tl-foot__lead">Дайджест платформы: обновления, кейсы и новые возможности раз в месяц.</p>
-          <form className="tl-foot__form" onSubmit={(e) => e.preventDefault()}>
-            <input type="email" placeholder="Ваш email" aria-label="Email" />
-            <button type="submit" aria-label="Подписаться"><Icon name="send" size={16} /></button>
-          </form>
+          {subscribed ? (
+            <p className="tl-foot__thanks" style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--green, #34d399)', fontWeight: 600, margin: '4px 0 0' }}>
+              <Icon name="check" size={16} /> Спасибо за подписку!
+            </p>
+          ) : (
+            <form className="tl-foot__form" onSubmit={subscribe} noValidate>
+              <input
+                type="email" placeholder="Ваш email" aria-label="Email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); if (error) setError(false); }}
+                aria-invalid={error || undefined}
+                style={error ? { borderColor: 'var(--pink, #f472b6)' } : undefined}
+              />
+              <button type="submit" aria-label="Подписаться"><Icon name="send" size={16} /></button>
+            </form>
+          )}
+          {error && !subscribed && (
+            <p style={{ color: 'var(--pink, #f472b6)', fontSize: 12.5, margin: '8px 0 0' }}>Введите корректный email</p>
+          )}
           <div className="tl-foot__glow" aria-hidden="true" />
         </div>
         <div className="tl-foot__col">
@@ -827,7 +916,7 @@ function Footer() {
           <a href="#features">Возможности</a>
           <a href="#how">Как это работает</a>
           <a href="#pricing">Тарифы</a>
-          <a href="#">Документация</a>
+          <a href="#" onClick={soon}>Документация</a>
         </div>
         <div className="tl-foot__col">
           <h5>Контакты</h5>
@@ -846,9 +935,9 @@ function Footer() {
       <div className="tl-foot__bot">
         <span>© 2026 Функция · Единая платформа ПИР</span>
         <nav>
-          <a href="#">Политика конфиденциальности</a>
-          <a href="#">Условия использования</a>
-          <a href="#">Cookie</a>
+          <a href="#" onClick={soon}>Политика конфиденциальности</a>
+          <a href="#" onClick={soon}>Условия использования</a>
+          <a href="#" onClick={soon}>Cookie</a>
         </nav>
       </div>
     </footer>
@@ -923,11 +1012,11 @@ function TestLanding({ go }) {
     window.addEventListener('resize', check);
     return () => { root.removeEventListener('scroll', check); window.removeEventListener('resize', check); };
   }, []);
-  return <main className="tl" ref={rootRef}><Nav go={go} /><Hero go={go} /><Features go={go} /><ObjectTypes go={go} /><Steps /><RegionMap go={go} /><Pricing go={go} /><FAQ /><Band go={go} /><Footer /></main>;
+  return <main className="tl" ref={rootRef}><Nav go={go} /><Hero go={go} /><Features go={go} /><ObjectTypes go={go} /><Steps /><RegionMap go={go} /><Pricing go={go} /><FAQ /><Band go={go} /><Footer /><LandingToast /></main>;
 }
 
 const ROUTE_MAP = {
-  auth: '/auth', 'order-new': '/orders/new', landing: '/',
+  auth: '/auth', 'order-new': '/orders/new', landing: '/', dashboard: '/dashboard',
   designers: '/designers', experts: '/experts', manufacturers: '/manufacturers',
   expertise: '/expertise', standards: '/standards', chat: '/chat',
   analytics: '/analytics', settings: '/settings', orders: '/orders', pricing: '/auth',

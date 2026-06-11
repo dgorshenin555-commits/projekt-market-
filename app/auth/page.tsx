@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 import { UserRole } from '@/lib/types';
@@ -15,26 +15,39 @@ const ROLES: { value: UserRole; label: string; icon: string }[] = [
 
 export default function AuthPage() {
   const router = useRouter();
-  const { login, register } = useApp();
+  const { login, register, user, hydrated } = useApp();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const [role, setRole] = useState<UserRole>('customer');
+  const [error, setError] = useState('');
+
+  // Уже авторизован → в кабинет (BUG-006).
+  useEffect(() => {
+    if (hydrated && user) router.replace('/dashboard');
+  }, [hydrated, user, router]);
+
+  const switchMode = (toLogin: boolean) => { setIsLogin(toLogin); setError(''); };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     if (isLogin) {
       const ok = login(email, password);
       if (ok) {
         router.push('/dashboard');
       } else {
-        alert('Пользователь не найден. Попробуйте зарегистрироваться.');
+        setError('Неверный email или пароль.');
       }
     } else {
-      register({ email, name, role, company, phone: '' });
-      router.push('/dashboard');
+      const ok = register({ email, name, role, company, phone: '', password });
+      if (ok) {
+        router.push('/dashboard');
+      } else {
+        setError('Этот email уже зарегистрирован — войдите в существующий аккаунт.');
+      }
     }
   };
 
@@ -60,12 +73,16 @@ export default function AuthPage() {
             <>
               <div className="form-group">
                 <label className="form-label">Ваша роль</label>
-                <div className="role-selector">
+                <div className="role-selector" role="radiogroup" aria-label="Ваша роль">
                   {ROLES.map((r) => (
                     <div
                       key={r.value}
                       className={`role-option ${role === r.value ? 'selected' : ''}`}
+                      role="radio"
+                      aria-checked={role === r.value}
+                      tabIndex={0}
                       onClick={() => setRole(r.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setRole(r.value); } }}
                     >
                       <div className="role-option-icon">{r.icon}</div>
                       <div className="role-option-label">{r.label}</div>
@@ -89,8 +106,14 @@ export default function AuthPage() {
           </div>
           <div className="form-group">
             <label className="form-label">Пароль</label>
-            <input className="form-input" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <input className="form-input" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            {!isLogin && <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>Минимум 6 символов</span>}
           </div>
+          {error && (
+            <div role="alert" style={{ background: 'rgba(244,113,127,0.12)', color: '#f4717f', border: '1px solid rgba(244,113,127,0.32)', borderRadius: 8, padding: '10px 14px', fontSize: 13.5 }}>
+              {error}
+            </div>
+          )}
           <button type="submit" className="btn btn-primary btn-block" style={{ marginTop: 8 }}>
             {isLogin ? 'Войти' : 'Зарегистрироваться'}
           </button>
@@ -98,9 +121,9 @@ export default function AuthPage() {
 
         <div className="auth-switch">
           {isLogin ? (
-            <>Нет аккаунта? <a onClick={() => setIsLogin(false)} style={{ cursor: 'pointer' }}>Зарегистрируйтесь</a></>
+            <>Нет аккаунта? <a onClick={() => switchMode(false)} style={{ cursor: 'pointer' }}>Зарегистрируйтесь</a></>
           ) : (
-            <>Уже есть аккаунт? <a onClick={() => setIsLogin(true)} style={{ cursor: 'pointer' }}>Войдите</a></>
+            <>Уже есть аккаунт? <a onClick={() => switchMode(true)} style={{ cursor: 'pointer' }}>Войдите</a></>
           )}
         </div>
       </div>

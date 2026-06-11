@@ -135,9 +135,10 @@ export default function StandardsPage() {
                 Раздел: {doc.section}
               </div>
               <div className="std-featured-actions">
-                <button className="std-btn-download" onClick={() => notify('Скачивание документа — в разработке')}>
+                <button className="std-btn-download" onClick={() => notify('Скачивание PDF появится в ближайшем обновлении')}>
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4-4h2.5V3h3v5H12L8 12z"/><path d="M14 14H2v-2h12v2z"/></svg>
                   Скачать PDF
+                  <span className="std-soon-badge">Скоро</span>
                 </button>
                 <button className="std-btn-icon" onClick={() => notify('Просмотр документа — в разработке')}>🔍</button>
                 <button className="std-btn-icon" onClick={() => copyCode(doc.code)}>📋</button>
@@ -243,6 +244,24 @@ export default function StandardsPage() {
           ))}
         </div>
       </aside>
+
+      <style dangerouslySetInnerHTML={{__html:`
+        .std-soon-badge {
+          display: inline-flex;
+          align-items: center;
+          margin-left: 6px;
+          padding: 1px 6px;
+          font-size: 9px;
+          font-weight: 700;
+          line-height: 1.4;
+          letter-spacing: 0.02em;
+          text-transform: uppercase;
+          border-radius: 999px;
+          background: rgba(245, 158, 11, 0.18);
+          color: #f59e0b;
+          white-space: nowrap;
+        }
+      `}}/>
     </div>
   );
 }

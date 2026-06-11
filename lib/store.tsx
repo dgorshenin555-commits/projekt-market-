@@ -11,12 +11,15 @@ interface AppState {
 }
 
 interface AppContextType extends AppState {
+  hydrated: boolean;
   login: (email: string, password: string) => boolean;
-  register: (user: Omit<User, 'id' | 'createdAt'>) => void;
+  register: (user: Omit<User, 'id' | 'createdAt'>) => boolean;
   logout: () => void;
   updateUser: (patch: Partial<Omit<User, 'id' | 'createdAt'>>) => void;
   addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'responsesCount' | 'customerId' | 'customerName'>) => Order;
-  addResponse: (response: Omit<OrderResponse, 'id' | 'createdAt' | 'designerId' | 'designerName' | 'designerCompany'>) => void;
+  addResponse: (response: Omit<OrderResponse, 'id' | 'createdAt' | 'designerId' | 'designerName' | 'designerCompany'>) => boolean;
+  hasResponded: (orderId: string) => boolean;
+  selectExecutor: (orderId: string, designerId: string, designerName: string) => void;
   getOrderById: (id: string) => Order | undefined;
   getResponsesForOrder: (orderId: string) => OrderResponse[];
   getMyOrders: () => Order[];
@@ -72,29 +75,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (mounted) saveState(state);
   }, [state, mounted]);
 
-  const login = useCallback((email: string, _password: string) => {
+  const login = useCallback((email: string, password: string) => {
     if (typeof window === 'undefined') return false;
     const users = JSON.parse(localStorage.getItem('pm_users') || '[]') as User[];
-    const found = users.find((u) => u.email === email);
-    if (found) {
-      setState((prev) => ({ ...prev, user: found }));
-      return true;
-    }
-    return false;
+    const found = users.find((u) => u.email.trim().toLowerCase() === email.trim().toLowerCase());
+    if (!found) return false;
+    // Проверяем пароль. У старых аккаунтов пароль мог не сохраниться —
+    // для обратной совместимости такие пускаем по email.
+    if (found.password && found.password !== password) return false;
+    setState((prev) => ({ ...prev, user: found }));
+    return true;
   }, []);
 
   const register = useCallback((userData: Omit<User, 'id' | 'createdAt'>) => {
+    if (typeof window === 'undefined') return false;
+    const users = JSON.parse(localStorage.getItem('pm_users') || '[]') as User[];
+    const email = (userData.email || '').trim().toLowerCase();
+    // Дубликат email недопустим (BUG-002).
+    if (users.some((u) => u.email.trim().toLowerCase() === email)) {
+      return false;
+    }
     const newUser: User = {
       ...userData,
       id: generateId(),
       createdAt: new Date().toISOString(),
     };
-    if (typeof window !== 'undefined') {
-      const users = JSON.parse(localStorage.getItem('pm_users') || '[]') as User[];
-      users.push(newUser);
-      localStorage.setItem('pm_users', JSON.stringify(users));
-    }
+    users.push(newUser);
+    localStorage.setItem('pm_users', JSON.stringify(users));
     setState((prev) => ({ ...prev, user: newUser }));
+    return true;
   }, []);
 
   const logout = useCallback(() => {
@@ -133,10 +142,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [state.user]);
 
   const addResponse = useCallback((responseData: Omit<OrderResponse, 'id' | 'createdAt' | 'designerId' | 'designerName' | 'designerCompany'>) => {
+    const me = state.user?.id || '';
+    // Один проектировщик — один отклик на заявку (BUG-021).
+    if (state.responses.some((r) => r.orderId === responseData.orderId && r.designerId === me)) {
+      return false;
+    }
     const newResponse: OrderResponse = {
       ...responseData,
       id: generateId(),
-      designerId: state.user?.id || '',
+      designerId: me,
       designerName: state.user?.name || '',
       designerCompany: state.user?.company,
       createdAt: new Date().toISOString(),
@@ -150,7 +164,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : o
       ),
     }));
-  }, [state.user]);
+    return true;
+  }, [state.user, state.responses]);
+
+  const hasResponded = useCallback((orderId: string) => {
+    const me = state.user?.id;
+    return !!me && state.responses.some((r) => r.orderId === orderId && r.designerId === me);
+  }, [state.responses, state.user]);
+
+  // Выбор исполнителя заказчиком: заявка переходит «В работу» (BUG-019).
+  const selectExecutor = useCallback((orderId: string, designerId: string, designerName: string) => {
+    setState((prev) => ({
+      ...prev,
+      orders: prev.orders.map((o) =>
+        o.id === orderId
+          ? { ...o, status: 'in_progress' as const, assignedDesignerId: designerId, assignedDesignerName: designerName }
+          : o
+      ),
+    }));
+  }, []);
 
   const getOrderById = useCallback((id: string) => {
     return state.orders.find((o) => o.id === id);
@@ -172,8 +204,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         ...state,
+        hydrated: mounted,
         login, register, logout, updateUser,
-        addOrder, addResponse,
+        addOrder, addResponse, hasResponded, selectExecutor,
         getOrderById, getResponsesForOrder,
         getMyOrders, getMyResponses,
         notice, notify,

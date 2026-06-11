@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 
 import { 
@@ -33,7 +33,8 @@ const NAV_ITEMS = [
 
 export default function InternalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, notice } = useApp();
+  const router = useRouter();
+  const { user, notice, hydrated } = useApp();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
@@ -44,6 +45,21 @@ export default function InternalLayout({ children }: { children: React.ReactNode
     const t = setTimeout(() => setToastVisible(false), 2800);
     return () => clearTimeout(t);
   }, [notice?.id]);
+
+  // Единый auth-guard для всего кабинета. Ждём гидратацию стора из localStorage,
+  // чтобы не выкидывать залогиненного при прямой загрузке/перезагрузке (BUG-008),
+  // и не показывать кабинет гостю (BUG-007).
+  useEffect(() => {
+    if (hydrated && !user) router.replace('/auth');
+  }, [hydrated, user, router]);
+
+  if (!hydrated || !user) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: 'var(--text-muted, #888)', fontSize: 14 }}>
+        Загрузка…
+      </div>
+    );
+  }
 
   const toggleSidebar = () => {
     if (window.innerWidth <= 768) {

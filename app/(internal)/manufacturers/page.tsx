@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { MOCK_MANUFACTURERS, MOCK_MANUFACTURER_PRODUCTS } from '@/lib/mock-data';
 import { REGIONS } from '@/lib/constants';
@@ -8,6 +8,8 @@ import { Manufacturer } from '@/lib/types';
 import { useApp } from '@/lib/store';
 
 const SECTION_FILTERS = ['АР', 'КР', 'ЭОМ', 'ВК', 'ОВиК', 'ГС', 'ТХ', 'ПБ', 'СС'];
+
+const SHORTLIST_KEY = 'pm_shortlist_mfr';
 
 // SVG Logos for each manufacturer
 const MANUFACTURER_LOGOS: Record<string, React.ReactNode> = {
@@ -113,6 +115,35 @@ export default function ManufacturersPage() {
   const [regionFilter, setRegionFilter] = useState('');
   const [sectionFilter, setSectionFilter] = useState('');
   const [selectedMfr, setSelectedMfr] = useState<Manufacturer | null>(null);
+  const [shortlist, setShortlist] = useState<string[]>([]);
+
+  // Load persisted shortlist after mount to avoid SSR hydration mismatch
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(SHORTLIST_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setShortlist(parsed.filter((x): x is string => typeof x === 'string'));
+      }
+    } catch {
+      // ignore malformed storage
+    }
+  }, []);
+
+  const toggleShortlist = (id: string, name: string) => {
+    setShortlist(prev => {
+      const isIn = prev.includes(id);
+      const next = isIn ? prev.filter(x => x !== id) : [...prev, id];
+      try {
+        window.localStorage.setItem(SHORTLIST_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage write errors
+      }
+      notify(isIn ? `«${name}» убран из проекта` : `«${name}» добавлен в проект`);
+      return next;
+    });
+  };
 
   const filteredMakers = MOCK_MANUFACTURERS.filter(m => {
     if (search && !m.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -123,7 +154,7 @@ export default function ManufacturersPage() {
   return (
     <div className="animate-in">
       {/* Title */}
-      <h1 className="dsn-title" style={{ marginBottom: 30 }}>Каталог производителей<br />и технических решений</h1>
+      <h1 className="dsn-title" style={{ marginBottom: 30 }}>Каталог производителей{' '}<br />и технических решений</h1>
 
       {/* Top filter bar area */}
       <div className="dsn-search-wrapper" style={{ marginBottom: 16 }}>
@@ -200,7 +231,12 @@ export default function ManufacturersPage() {
               ) : (
                 <>
                   <button className="mfg-btn ghost" onClick={(e) => { e.stopPropagation(); setSelectedMfr(mfg); }}>Открыть профиль</button>
-                  <button className="mfg-btn ghost" onClick={(e) => { e.stopPropagation(); notify('Добавление в проект — в разработке'); }}>Добавить в проект</button>
+                  <button
+                    className={`mfg-btn ghost ${shortlist.includes(mfg.id) ? 'active' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); toggleShortlist(mfg.id, mfg.name); }}
+                  >
+                    {shortlist.includes(mfg.id) ? 'В проекте ✓' : 'Добавить в проект'}
+                  </button>
                   <button className="mfg-btn ghost" style={{ marginLeft: 'auto' }} onClick={(e) => { e.stopPropagation(); router.push('/orders'); }}>≡ Заявки</button>
                 </>
               )}
@@ -295,7 +331,9 @@ export default function ManufacturersPage() {
 
               <div className="mfg-modal-actions">
                 <button className="btn btn-primary" style={{ width: '100%', padding: '14px', background: 'linear-gradient(90deg, #8b5cf6, #6d28d9)' }} onClick={() => notify('Сообщения — в разработке')}>Связаться с производителем</button>
-                <button className="btn btn-secondary" style={{ width: '100%', padding: '14px', marginTop: '12px' }} onClick={() => notify('Добавление в проект — в разработке')}>Добавить все BIM в проект</button>
+                <button className="btn btn-secondary" style={{ width: '100%', padding: '14px', marginTop: '12px' }} onClick={() => toggleShortlist(selectedMfr.id, selectedMfr.name)}>
+                  {shortlist.includes(selectedMfr.id) ? 'В проекте ✓' : 'Добавить в проект'}
+                </button>
               </div>
             </div>
           </div>
