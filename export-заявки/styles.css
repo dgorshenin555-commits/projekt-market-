@@ -1,0 +1,86 @@
+/* ============================================================
+   ФУНКЦИЯ — design tokens, fonts, base
+   ============================================================ */
+
+@import url("components.css");
+@import url("layouts.css");
+
+@font-face { font-family: "Inter"; font-weight: 300; font-style: normal; font-display: swap; src: url("fonts/Inter-300.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: url("fonts/Inter-400.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: swap; src: url("fonts/Inter-500.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: url("fonts/Inter-600.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; font-style: normal; font-display: swap; src: url("fonts/Inter-700.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; font-style: normal; font-display: swap; src: url("fonts/Inter-800.woff2") format("woff2"); }
+
+:root {
+  /* surfaces */
+  --bg:          #08080c;
+  --bg-2:        #0b0b11;   /* sidebar / topbar */
+  --surface:     #131320;   /* cards */
+  --surface-2:   #1a1a28;   /* nested / inputs */
+  --surface-3:   #22222f;   /* hover / chips */
+  --border:      rgba(255,255,255,.07);
+  --border-2:    rgba(255,255,255,.12);
+
+  /* text */
+  --text:        #f3f3f7;
+  --text-dim:    #9495a4;
+  --text-mute:   #62636f;
+
+  /* accent (tweakable) */
+  --accent:      #8b6cf2;
+  --accent-2:    #ab87ff;
+  --accent-soft: rgba(139,108,242,.14);
+  --accent-line: rgba(139,108,242,.34);
+  --grad:        linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+
+  /* status */
+  --green:  #34d399;
+  --blue:   #5b9dff;
+  --amber:  #f5b13d;
+  --red:    #f4717f;
+  --pink:   #f06ea9;
+
+  /* type */
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* radii */
+  --r-xs: 7px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+
+  /* shadow */
+  --shadow:   0 18px 50px -18px rgba(0,0,0,.7);
+  --shadow-sm:0 8px 24px -12px rgba(0,0,0,.6);
+  --glow:     0 0 0 1px var(--accent-line), 0 14px 40px -16px rgba(139,108,242,.5);
+
+  --sidebar-w: 260px;
+  --topbar-h:  64px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body { overflow: hidden; }
+
+::selection { background: var(--accent-soft); color: #fff; }
+
+button { font-family: inherit; cursor: pointer; }
+input, textarea, select { font-family: inherit; }
+
+/* scrollbars */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 99px; border: 3px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.16); background-clip: padding-box; }

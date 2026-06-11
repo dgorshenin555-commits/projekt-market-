@@ -1,182 +1,228 @@
+// @ts-nocheck
 'use client';
 
-import Link from 'next/link';
-import { useApp } from '@/lib/store';
-import { OBJECT_TYPE_LABELS, ORDER_STATUS_MAP } from '@/lib/constants';
-import { useState } from 'react';
-import { ObjectType, OrderStatus } from '@/lib/types';
-import Image from 'next/image';
-import heroBg from '@/public/hero-bg.png';
+/* Список заявок — новый дизайн «Функция» (перенос Orders из Cloud Design),
+   привязанный к реальным заявкам из store. Дизайн заскоуплен под .fx. */
 
-type ViewMode = 'list' | 'grid' | 'compact';
+import { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useApp } from '@/lib/store';
+import { Icon } from '../../_orders/icons';
+import { StatusBadge, STATUS_BADGE, typeImage, typeLabel, urgencyBucket, formatDeadline } from '../../_orders/shared';
+import '../../_orders/orders.css';
+
+const TYPE_OPTIONS = ['Все типы', 'Коммерческая недвижимость', 'Промышленность', 'Частное строительство', 'Линейные объекты', 'Здания и сооружения'];
+const STATUS_OPTIONS = ['Все статусы', 'Опубликована', 'В работе', 'Завершена'];
+
+const URGENCY = [['Любой', null, '#9ca3af'], ['Срочно', 'u1', '#f4717f'], ['1–3 мес', 'u2', '#f5b13d'], ['3 мес+', 'u3', '#34d399']];
+
+const ORDER_HINTS = [
+  ['building', 'Коммерческие', (o) => o.objectType === 'commercial'],
+  ['factory', 'Промышленность', (o) => o.objectType === 'industrial'],
+  ['wallet', 'Бюджет 10М+', (o) => (parseInt((o.budget || '').replace(/\D/g, ''), 10) || 0) >= 10000000],
+  ['comment', 'Много откликов', (o) => o.responsesCount >= 8],
+];
+
+const isWaiting = (o) => !o.budget || /договор|предлож|ждём|ждем/i.test(o.budget);
+
+function UrgencyScale({ value, onPick }) {
+  return (
+    <div className="ratescale" title="Срочность по дедлайну">
+      {URGENCY.map(([label, v, c]) => (
+        <button key={label} className={value === v ? 'is-on' : ''} style={{ '--dot': c }} onClick={() => onPick(v)}><i />{label}</button>
+      ))}
+    </div>
+  );
+}
+
+function OrderHints({ active, onPick }) {
+  return (
+    <div className="cat-hints">
+      {ORDER_HINTS.map(([ic, label], i) => (
+        <button key={label} className={'cat-hint' + (active === i ? ' is-on' : '')} onClick={() => onPick(active === i ? null : i)}>
+          <Icon name={ic} size={14} />{label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Dropdown({ value, setValue, options }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button className={'pill' + (value !== options[0] ? ' is-active' : '')} style={{ height: 42 }} onClick={() => setOpen((o) => !o)}>
+        {value} <Icon name="chevD" size={14} />
+      </button>
+      {open && (
+        <div className="menu-pop">
+          {options.map((o) => (
+            <button key={o} className={'menu-pop__item' + (o === value ? ' is-sel' : '')} onClick={() => { setValue(o); setOpen(false); }}>{o}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* Поиск-промпт (перенос PromptSearch из каталога). Фильтрация — живая по вводу;
+   кнопка «Найти» и вложения декоративны (прототип). */
+function PromptSearch({ value, onChange, placeholder }) {
+  const [files, setFiles] = useState([]);
+  const taRef = useRef(null);
+  useLayoutEffect(() => {
+    const ta = taRef.current; if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 160) + 'px';
+  }, [value]);
+  const has = (value || '').trim().length > 0 || files.length > 0;
+  const addFiles = (e) => {
+    const list = Array.from(e.target.files || []);
+    if (list.length) setFiles((p) => [...p, ...list]);
+    e.target.value = '';
+  };
+  const removeFile = (i) => setFiles((p) => p.filter((_, idx) => idx !== i));
+  return (
+    <div className="psearch">
+      {files.length > 0 && (
+        <div className="psearch__files">
+          {files.map((f, i) => (
+            <span key={i} className="psearch__file">
+              <Icon name="paperclip" /><b>{f.name}</b>
+              <button onClick={() => removeFile(i)} aria-label="Убрать"><Icon name="x" size={13} /></button>
+            </span>
+          ))}
+        </div>
+      )}
+      <textarea ref={taRef} rows={1} className="psearch__ta" value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder || 'Опишите задачу…'}
+        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) e.preventDefault(); }} />
+      <div className="psearch__bar">
+        <label className="psearch__act psearch__attach" data-tip="Прикрепить файлы">
+          <input type="file" multiple hidden onChange={addFiles} />
+          <Icon name="paperclip" />
+        </label>
+        <span className="psearch__spacer" />
+        <button className={'psearch__act psearch__send' + (has ? ' is-on' : '')} disabled={!has} data-tip="Найти" aria-label="Найти">
+          <Icon name="send" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function OrderCard({ o, go }) {
+  const shown = o.sections.slice(0, 6);
+  const extra = o.sections.length > 6 ? o.sections.length - 6 : 0;
+  const img = typeImage(o.objectType);
+  const waiting = isWaiting(o);
+  return (
+    <div className="card card-hover ordercard" onClick={() => go('order-detail', o.id)}>
+      {img
+        ? <div className="ordercard__thumb--img" style={{ backgroundImage: `url('${img.src.src}')` }} />
+        : <div className="thumb thumb-tower ordercard__thumb" />}
+      <div className="grow" style={{ minWidth: 0 }}>
+        <div className="row between gap16" style={{ alignItems: 'flex-start' }}>
+          <h3 className="ordercard__title">{o.title}</h3>
+          <StatusBadge status={o.status} />
+        </div>
+        <p className="muted ordercard__desc">{o.description}</p>
+        <div className="meta-row mt12">
+          <span><Icon name="pin" />{o.region}</span>
+          <span><Icon name="building" />{typeLabel(o.objectType)}</span>
+          <span><Icon name="clock" />Срок: {formatDeadline(o.deadline)}</span>
+        </div>
+        <div className="chips mt12">
+          {shown.map((s) => <span key={s} className="chip chip-code">{s}</span>)}
+          {extra > 0 && <span className="chip">+{extra}</span>}
+        </div>
+        <div className="row between mt16">
+          {waiting
+            ? <span className="row gap8" style={{ color: 'var(--amber)', fontWeight: 700 }}><Icon name="wallet" size={16} />{o.budget || 'Ждём предложений'}</span>
+            : <span className="price row gap8"><Icon name="wallet" size={17} style={{ color: 'var(--accent-2)' }} />{o.budget}</span>}
+          <span className="row gap6 dim" style={{ fontSize: 13 }}><Icon name="comment" size={15} />{o.responsesCount} откликов</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function OrdersPage() {
+  const router = useRouter();
   const { orders } = useApp();
-  const [filterType, setFilterType] = useState<ObjectType | ''>('');
-  const [filterStatus, setFilterStatus] = useState<OrderStatus | ''>('');
-  const [search, setSearch] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const go = (target, id) => {
+    if (target === 'order-new') router.push('/orders/new');
+    else if (target === 'order-detail') router.push(`/orders/detail?id=${id}`);
+  };
 
-  const filtered = orders.filter((o) => {
-    if (filterType && o.objectType !== filterType) return false;
-    if (filterStatus && o.status !== filterStatus) return false;
-    if (search && !o.title.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  const [view, setView] = useState('list');
+  const [type, setType] = useState('Все типы');
+  const [status, setStatus] = useState('Все статусы');
+  const [urg, setUrg] = useState(null);
+  const [hint, setHint] = useState(null);
+  const [q, setQ] = useState('');
+
+  const query = q.trim().toLowerCase();
+  const list = orders.filter((o) =>
+    (type === 'Все типы' || typeLabel(o.objectType) === type) &&
+    (status === 'Все статусы' || (STATUS_BADGE[o.status] && STATUS_BADGE[o.status].label === status)) &&
+    (urg == null || urgencyBucket(o.deadline) === urg) &&
+    (hint == null || ORDER_HINTS[hint][2](o)) &&
+    (!query || o.title.toLowerCase().includes(query) || (o.description || '').toLowerCase().includes(query) || (o.region || '').toLowerCase().includes(query))
+  );
+  const dirty = type !== 'Все типы' || status !== 'Все статусы' || urg != null || hint != null || query;
+  const reset = () => { setType('Все типы'); setStatus('Все статусы'); setUrg(null); setHint(null); setQ(''); };
 
   return (
-    <div className="animate-in">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700 }}>Заявки</h1>
-        <Link href="/orders/new" className="btn btn-primary">+ Создать заявку</Link>
+    <div className="fx animate-in">
+      <div className="cat-head">
+        <div>
+          <p className="cat-eyebrow">Заявки</p>
+          <h1 className="cat-title">Заявки на проектирование<br />и экспертизу</h1>
+          <p className="cat-lead">Активные проекты заказчиков: от частных домов до промышленных объектов. Откликайтесь на подходящие или опишите свою задачу.</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => go('order-new')}><Icon name="plus" size={16} /> Создать заявку</button>
       </div>
 
-      {/* Filters */}
-      <div className="filters-bar">
-        <input
-          type="text"
-          placeholder="Поиск по заявкам..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="form-input"
-          style={{ maxWidth: 300 }}
-        />
-        <select
-          className="filter-select"
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value as ObjectType | '')}
-        >
-          <option value="">Все типы</option>
-          {Object.entries(OBJECT_TYPE_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
+      <PromptSearch value={q} onChange={setQ} placeholder="Опишите задачу — найдём подходящие заявки…" />
+
+      <div style={{ marginTop: 14 }}><OrderHints active={hint} onPick={setHint} /></div>
+
+      <div className="row between gap16 wrap" style={{ margin: '20px 0 16px' }}>
+        <div className="row gap10 wrap">
+          <Dropdown value={type} setValue={setType} options={TYPE_OPTIONS} />
+          <Dropdown value={status} setValue={setStatus} options={STATUS_OPTIONS} />
+          <UrgencyScale value={urg} onPick={setUrg} />
+        </div>
+        <div className="viewtoggle">
+          {['list', 'columns', 'menu'].map((v) => (
+            <button key={v} className={view === v ? 'is-active' : ''} onClick={() => setView(v)}><Icon name={v === 'columns' ? 'columns' : v === 'menu' ? 'menu' : 'list'} /></button>
           ))}
-        </select>
-        <select
-          className="filter-select"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value as OrderStatus | '')}
-        >
-          <option value="">Все статусы</option>
-          {Object.entries(ORDER_STATUS_MAP).map(([k, v]) => (
-            <option key={k} value={k}>{v.label}</option>
-          ))}
-        </select>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, background: 'var(--bg-input)', padding: 4, borderRadius: 'var(--radius-md)' }}>
-          <button onClick={() => setViewMode('list')} className={`btn ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}`} style={{ padding: '6px 10px' }} title="Списком">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-          </button>
-          <button onClick={() => setViewMode('grid')} className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-ghost'}`} style={{ padding: '6px 10px' }} title="Сеткой">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-          </button>
-          <button onClick={() => setViewMode('compact')} className={`btn ${viewMode === 'compact' ? 'btn-primary' : 'btn-ghost'}`} style={{ padding: '6px 10px' }} title="Компактно">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
-          </button>
         </div>
       </div>
 
-      {/* Orders list */}
-      <div 
-        className="orders-list" 
-        style={viewMode === 'grid' ? { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 24 } : { display: 'flex', flexDirection: 'column', gap: 16 }}
-      >
-        {filtered.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">📋</div>
-            <div className="empty-state-title">Заявки не найдены</div>
-            <p>Попробуйте изменить фильтры или создайте новую заявку</p>
-          </div>
-        ) : (
-          filtered.map((order) => {
-            const status = ORDER_STATUS_MAP[order.status];
-            
-            if (viewMode === 'compact') {
-              return (
-                <Link key={order.id} href={`/orders/detail?id=${order.id}`} style={{ textDecoration: 'none' }}>
-                  <div className="order-card" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 20px' }}>
-                    <div style={{ flex: 1, minWidth: 200 }}>
-                      <div className="order-card-title" style={{ fontSize: 14, marginBottom: 4 }}>{order.title}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{order.customerName} • 🏗️ {OBJECT_TYPE_LABELS[order.objectType]}</div>
-                    </div>
-                    <div style={{ width: 120, fontSize: 13, fontWeight: 600 }}>💰 {order.budget}</div>
-                    <div style={{ width: 100, fontSize: 12, color: 'var(--text-muted)' }}>💬 {order.responsesCount} откл.</div>
-                    <div style={{ width: 120 }}>
-                      <span className="status-badge" style={{ color: status.color, background: `${status.color}16`, padding: '2px 6px', fontSize: 11 }}>
-                        {status.label}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            }
-
-            return (
-              <Link key={order.id} href={`/orders/detail?id=${order.id}`} style={{ textDecoration: 'none' }}>
-                <div className="order-card" style={{ display: 'flex', flexDirection: viewMode === 'grid' ? 'column' : 'row', gap: 20, padding: viewMode === 'grid' ? 0 : 24, overflow: 'hidden' }}>
-                  <div style={{
-                    width: viewMode === 'grid' ? '100%' : 160,
-                    height: viewMode === 'grid' ? 160 : 120,
-                    flexShrink: 0,
-                    borderRadius: viewMode === 'grid' ? 0 : 'var(--radius-md)',
-                    overflow: 'hidden',
-                    background: 'var(--bg-input)',
-                    position: 'relative',
-                    borderBottom: viewMode === 'grid' ? '1px solid rgba(255,255,255,0.05)' : 'none'
-                  }}>
-                    <Image 
-                      src={heroBg}
-                      alt="Thumbnail"
-                      fill
-                      style={{ objectFit: 'cover', opacity: 0.8 }} 
-                    />
-                    <div style={{
-                      position: 'absolute', inset: 0, 
-                      background: order.objectType === 'private' ? 'rgba(59, 130, 246, 0.2)' : 
-                                  order.objectType === 'commercial' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)'
-                    }} />
-                  </div>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: viewMode === 'grid' ? '20px' : 0 }}>
-                    <div className="order-card-header" style={{ marginBottom: 8 }}>
-                      <div className="order-card-title" style={{ fontSize: viewMode === 'grid' ? 18 : 16 }}>{order.title}</div>
-                      <span className="status-badge" style={{ color: status.color, background: `${status.color}16` }}>
-                        {status.label}
-                      </span>
-                    </div>
-                    <p style={{ 
-                      fontSize: 13, 
-                      color: 'var(--text-muted)', 
-                      margin: '0 0 16px 0',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      lineHeight: 1.5
-                    }}>
-                      {order.description}
-                    </p>
-                    <div className="order-card-meta" style={{ flexWrap: 'wrap', gap: '8px 16px', marginBottom: 16 }}>
-                      <span>📍 {order.region}</span>
-                      <span>🏗️ {OBJECT_TYPE_LABELS[order.objectType]}</span>
-                      {order.deadline && <span>⏳ Срок: {new Date(order.deadline).toLocaleDateString('ru-RU')}</span>}
-                    </div>
-                    <div className="order-card-tags" style={{ marginBottom: viewMode === 'grid' ? 20 : 'auto' }}>
-                      {order.sections.slice(0, 6).map((s) => (
-                        <span key={s} className="tag" style={{ padding: '2px 6px', fontSize: 11 }}><span className="tag-code">{s}</span></span>
-                      ))}
-                      {order.sections.length > 6 && <span className="tag" style={{ padding: '2px 6px', fontSize: 11 }}>+{order.sections.length - 6}</span>}
-                    </div>
-                    <div className="order-card-footer" style={{ marginTop: 'auto', paddingTop: 16, borderTop: viewMode === 'grid' ? '1px dashed rgba(255,255,255,0.1)' : 'none' }}>
-                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>💰 {order.budget}</span>
-                      <span style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>💬 {order.responsesCount} откликов</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })
-        )}
+      <div className="row between" style={{ marginBottom: 18 }}>
+        <span className="dim" style={{ fontSize: 13 }}>Найдено: {list.length} из {orders.length}</span>
+        {dirty && <button className="btn btn-ghost btn-sm" onClick={reset}><Icon name="x" size={13} /> Сбросить</button>}
       </div>
+
+      {list.length ? (
+        <div className={view === 'columns' ? 'orders-grid' : 'col gap16'}>
+          {list.map((o) => <OrderCard key={o.id} o={o} go={go} />)}
+        </div>
+      ) : (
+        <div className="card" style={{ textAlign: 'center', padding: 44 }}>
+          <p className="muted" style={{ margin: '0 0 16px', fontSize: 14.5 }}>По заданным условиям заявок не нашлось.</p>
+          <button className="btn btn-outline btn-sm" onClick={reset}>Сбросить фильтры</button>
+        </div>
+      )}
     </div>
   );
 }
