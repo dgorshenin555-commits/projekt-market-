@@ -738,3 +738,12 @@
 .fx .rolecard.is-sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-2); box-shadow: 0 0 0 1px var(--accent-line); }
 .fx .rolecard span { font-size: 14px; font-weight: 600; }
 
+/* ===== catalog (Очередь 3) ===== */
+/* PhotoAva — фото-аватар в стиле главной (перенос из test_landing.css / landing.css) */
+.fx .tl-avatar { position: relative; display: inline-grid; place-items: center; border-radius: 50%; overflow: visible; flex-shrink: 0;
+  background: var(--grad); color: #fff; font-weight: 700; }
+.fx .tl-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.fx .tl-avatar__fb { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; }
+.fx .tl-avatar--ring { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent-line); }
+.fx .tl-avatar__dot { position: absolute; right: -1px; bottom: -1px; width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 2px var(--bg); }
+
