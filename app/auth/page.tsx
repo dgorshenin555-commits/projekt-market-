@@ -10,10 +10,10 @@ import { Icon } from '../_orders/icons';
 import '../_orders/orders.css';
 
 const ROLES: { value: UserRole; label: string; icon: string }[] = [
-  { value: 'customer', label: 'Заказчик', icon: '🏢' },
-  { value: 'designer', label: 'Проектировщик', icon: '👷' },
-  { value: 'expert', label: 'Эксперт', icon: '🔍' },
-  { value: 'manufacturer', label: 'Производитель', icon: '🏭' },
+  { value: 'customer', label: 'Заказчик', icon: 'building' },
+  { value: 'designer', label: 'Проектировщик', icon: 'pen' },
+  { value: 'expert', label: 'Эксперт', icon: 'shield' },
+  { value: 'manufacturer', label: 'Производитель', icon: 'factory' },
 ];
 
 /* ───────────────────────── animated characters (ported from Cloud Design) ───────────────────────── */
@@ -243,7 +243,7 @@ export default function AuthPage() {
                           onClick={() => setRole(r.value)}
                           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setRole(r.value); } }}
                         >
-                          <div className="role-option-icon">{r.icon}</div>
+                          <div className="role-option-icon"><Icon name={r.icon} size={22} /></div>
                           <div className="role-option-label">{r.label}</div>
                         </div>
                       ))}

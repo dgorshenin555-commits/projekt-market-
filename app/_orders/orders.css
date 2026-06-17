@@ -503,6 +503,14 @@
 .fx .authx__form { display: flex; align-items: center; justify-content: center; padding: 32px; background: var(--bg); }
 .fx .authx__formwrap { width: 100%; max-width: 380px; }
 .fx .authx__head { text-align: center; }
+/* Карточки выбора роли в .fx-стиле (SVG-иконки вместо эмодзи). */
+.fx .role-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fx .role-option { padding: 14px 12px; background: var(--surface-2); border: 1.5px solid var(--border); border-radius: var(--r-md); cursor: pointer; text-align: center; transition: border-color .15s, background .15s, box-shadow .15s; }
+.fx .role-option:hover { border-color: var(--accent-line); }
+.fx .role-option.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }
+.fx .role-option-icon { display: grid; place-items: center; width: 40px; height: 40px; margin: 0 auto 8px; border-radius: 11px; background: var(--surface-3); color: var(--text-mute); transition: color .15s, background .15s; }
+.fx .role-option.selected .role-option-icon { color: var(--accent-2); background: var(--accent-soft); }
+.fx .role-option-label { font-size: 13px; font-weight: 600; color: var(--text); }
 .fx .inputwrap { position: relative; }
 .fx .inputwrap .input { width: 100%; padding-right: 44px; }
 .fx .inputwrap__btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; display: grid; place-items: center; border: 0; background: transparent; color: var(--text-mute); cursor: pointer; border-radius: 8px; }
