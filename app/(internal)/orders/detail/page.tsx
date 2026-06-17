@@ -10,7 +10,7 @@ import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 import { Icon } from '../../../_orders/icons';
-import { Avatar, StatusBadge, typeImage, typeLabel, formatDeadline } from '../../../_orders/shared';
+import { Avatar, StatusBadge, typeImage, typeLabel, formatDeadline, formatMoney } from '../../../_orders/shared';
 import '../../../_orders/orders.css';
 
 const TABS = ['Описание', 'Проектировщики', 'Коммуникации', 'Замечания', 'Файлы'];
@@ -74,7 +74,7 @@ function OrderDetailContent() {
     const ok = addResponse({
       orderId: o.id,
       message: responseText,
-      proposedBudget: propBudget.trim() ? `${propBudget.replace(/\D/g, '')} ₽` : undefined,
+      proposedBudget: propBudget.trim() ? formatMoney(propBudget) : undefined,
     });
     if (!ok) { notify('Вы уже откликнулись на эту заявку'); return; }
     setResponseText('');

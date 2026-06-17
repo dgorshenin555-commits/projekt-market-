@@ -61,6 +61,18 @@ export function urgencyBucket(deadline) {
   return n <= 30 ? 'u1' : n <= 90 ? 'u2' : 'u3';
 }
 
+/* Форматирование суммы бюджета (BUG-010): «30000000» → «30 000 000 ₽».
+   Разбивает по разрядам обычным пробелом — как в демо-данных («12 000 000 ₽»).
+   Нечисловой ввод («Ждём предложений», «По договорённости») возвращается как есть. */
+export function formatMoney(value) {
+  if (value == null) return '';
+  const raw = String(value).trim();
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return raw;
+  const grouped = String(Number(digits)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${grouped} ₽`;
+}
+
 export function formatDeadline(deadline) {
   if (!deadline) return 'по согласованию';
   const raw = String(deadline).trim();

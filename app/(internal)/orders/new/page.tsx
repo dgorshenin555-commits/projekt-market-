@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 import { REGIONS, getSections } from '@/lib/constants';
 import { Icon } from '../../../_orders/icons';
-import { typeImage, formatDeadline } from '../../../_orders/shared';
+import { typeImage, formatDeadline, formatMoney } from '../../../_orders/shared';
 import '../../../_orders/orders.css';
 
 const STEPS = ['Тип объекта', 'Регион и стадия', 'Разделы', 'Бюджет и сроки', 'Файлы'];
@@ -78,13 +78,16 @@ export default function NewOrderPage() {
 
   const toggle = (code) => setSel((p) => (p.includes(code) ? p.filter((x) => x !== code) : [...p, code]));
 
-  // Счётчик готовности 0..5 — отражает реально заполненные секции (BUG-011).
+  // Счётчик готовности 0..5 (BUG-011): пустая форма = 0/5, финальный шаг = 5/5.
+  // Дефолтные регион/стадия/тип привлечения и «ждём предложений» не считаются
+  // заполненными сами по себе — секция засчитывается, когда пользователь реально
+  // ввёл данные (1, 3) либо дошёл до соответствующего шага (2, 4, 5).
   const filled = [
-    !!objectType && !!title.trim(),
-    !!region && !!stage && !!scale,
-    sel.length > 0,
-    byOffer || isValidBudget(budget) || !!due,
-    files > 0 || step >= 4,
+    !!objectType && !!title.trim(),                              // 1. Тип объекта
+    step >= 1 && !!region && !!stage && !!scale,                 // 2. Регион и стадия
+    sel.length > 0,                                              // 3. Разделы
+    step >= 3 && (byOffer || isValidBudget(budget) || !!due),    // 4. Бюджет и сроки
+    step >= 4,                                                   // 5. Файлы (опциональны)
   ].filter(Boolean).length;
   const exempt = objectType === 'private';
 
@@ -106,7 +109,7 @@ export default function NewOrderPage() {
       stage,
       sections: sel,
       specialists,
-      budget: byOffer ? 'Ждём предложений' : (budget.trim() ? `${budget.trim()} ₽` : 'По договорённости'),
+      budget: byOffer ? 'Ждём предложений' : (budget.trim() ? formatMoney(budget) : 'По договорённости'),
       deadline: due.trim() || undefined,
       status: 'published',
     });
@@ -263,7 +266,7 @@ export default function NewOrderPage() {
           <div className="prev__price">
             {byOffer || !budget
               ? <span className="row gap8" style={{ color: 'var(--amber)', fontWeight: 700, fontSize: 18 }}><Icon name="wallet" size={18} />Ждём предложений</span>
-              : <span className="price" style={{ fontSize: 22 }}><Icon name="wallet" size={18} style={{ color: 'var(--accent-2)' }} /> {budget} ₽</span>}
+              : <span className="price" style={{ fontSize: 22 }}><Icon name="wallet" size={18} style={{ color: 'var(--accent-2)' }} /> {formatMoney(budget)}</span>}
           </div>
         </div>
       </div>

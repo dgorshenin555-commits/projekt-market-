@@ -361,9 +361,9 @@ function PanelSettings() {
 function Preview() {
   const ITEMS = [
     { ic: 'grid', label: 'Заявки', url: 'orders', title: 'Заявки', sub: 'Активные проекты на площадке', cta: 'Создать заявку', Panel: PanelOrders },
-    { ic: 'scan', label: 'Экспертиза', url: 'expertise', title: 'Экспертиза', sub: 'Замечания, итерации и статусы', cta: 'Новая итерация', Panel: PanelExpertise },
+    { ic: 'scan', label: 'Обследование', url: 'expertise', title: 'Обследование', sub: 'Замечания, итерации и статусы', cta: 'Новая итерация', Panel: PanelExpertise },
     { ic: 'pen', label: 'Проектировщики', url: 'designers', title: 'Проектировщики', sub: 'Подбор исполнителей по заявке', cta: 'Найти специалиста', Panel: PanelPeople },
-    { ic: 'shield', label: 'Эксперты', url: 'experts', title: 'Эксперты', sub: 'Аккредитованные организации', cta: 'Пригласить', Panel: PanelExperts },
+    { ic: 'shield', label: 'Инженер-обследователь', url: 'experts', title: 'Инженер-обследователь', sub: 'Аккредитованные организации', cta: 'Пригласить', Panel: PanelExperts },
     { ic: 'stamp', label: 'Производители', url: 'manufacturers', title: 'Производители', sub: 'Каталог решений и материалов', cta: 'В каталог', Panel: PanelManufacturers },
     { ic: 'database', label: 'Нормативы', url: 'standards', title: 'Нормативная база', sub: 'ГОСТ, СП, ТУ и стандарты', cta: 'Добавить документ', Panel: PanelStandards },
     { ic: 'chat', label: 'Коммуникации', url: 'chat', title: 'Коммуникации', sub: 'Переписка по проектам', cta: 'Написать', Panel: PanelChat },
@@ -537,7 +537,7 @@ function Hero({ go }) {
         <button className="tl-hbtn tl-hbtn--primary" onClick={() => go && go('order-new')}><Icon name="plus" size={15} /> Разместить заявку</button>
         <button className="tl-hbtn tl-hbtn--pink" onClick={() => go && go('auth')}><Icon name="search" size={15} /> Найти заказы</button>
       </div>
-      <h1 className="tl-title">Платформа для проектирования, <br />экспертизы и подбора решений</h1>
+      <h1 className="tl-title">Платформа для проектирования, <br />обследования и подбора решений</h1>
       <p className="tl-sub">Публикуйте заявки, находите проектировщиков, проходите экспертизу и работайте с нормативами — в одной системе.</p>
       <PromptBox go={go} />
 
@@ -616,7 +616,7 @@ function Features({ go }) {
       action: { label: 'Каталог', icon: 'layers', screen: 'designers' },
     },
     {
-      icon: 'scan', title: 'Экспертиза', tint: 'var(--blue)', cap: 'заключений за месяц', value: 342, change: 5.2, bench: 280, benchLabel: 'Среднее по рынку',
+      icon: 'scan', title: 'Обследование', tint: 'var(--blue)', cap: 'заключений за месяц', value: 342, change: 5.2, bench: 280, benchLabel: 'Среднее по рынку',
       compTitle: 'Ведущие эксперты', comp: [['Главгосэкспертиза', 560, 'shield'], ['«ЭкспертПроект»', 410, 'cert'], ['«СтройАудит»', 295, 'award']],
       action: { label: 'Эксперты', icon: 'shield', screen: 'experts' },
     },

@@ -21,9 +21,9 @@ import {
 
 const NAV_ITEMS = [
   { icon: LayoutGrid, label: 'Заявки', href: '/orders' },
-  { icon: ScanFace, label: 'Экспертиза', href: '/expertise' },
+  { icon: ScanFace, label: 'Обследование', href: '/expertise' },
   { icon: PenTool, label: 'Проектировщики', href: '/designers' },
-  { icon: ShieldCheck, label: 'Эксперты', href: '/experts' },
+  { icon: ShieldCheck, label: 'Инженер-обследователь', href: '/experts' },
   { icon: Stamp, label: 'Производители', href: '/manufacturers' },
   { icon: Database, label: 'Нормативы', href: '/standards' },
   { icon: MessageSquare, label: 'Коммуникации', href: '/chat' },

@@ -154,6 +154,15 @@ export interface ExpertiseRequest {
   deadline?: string;
   responsesCount: number;
   createdAt: string;
+  // Доп. поля для детального экрана «Обследование» (рестайл Функция(4), screens_data.jsx)
+  region?: string;
+  area?: string;
+  stage?: string;
+  expType?: string;
+  detail?: string;
+  client?: string;
+  clientCity?: string;
+  files?: string[][]; // [иконка, имя файла, размер]
 }
 
 // === Экспертиза в работе (Проект) ===

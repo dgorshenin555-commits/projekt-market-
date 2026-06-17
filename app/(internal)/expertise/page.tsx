@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 import { MOCK_EXPERTISE_REQUESTS, MOCK_EXPERTISE_PROJECTS } from '@/lib/mock-data';
 import { OBJECT_TYPE_LABELS } from '@/lib/constants';
@@ -12,6 +13,8 @@ type ViewMode = 'list' | 'grid' | 'compact';
 
 export default function ExpertisePage() {
   const { notify } = useApp();
+  const router = useRouter();
+  const openDetail = (id: string) => router.push('/expertise/detail?id=' + id);
   const [activeTab, setActiveTab] = useState<TabType>('marketplace');
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -83,7 +86,7 @@ export default function ExpertisePage() {
           {filteredRequests.map(req => {
             if (viewMode === 'compact') {
               return (
-                <div key={req.id} className="order-card" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 20px' }}>
+                <div key={req.id} className="order-card" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 20px', cursor: 'pointer' }} onClick={() => openDetail(req.id)}>
                   <div style={{ flex: 1, minWidth: 200 }}>
                     <div className="order-card-title" style={{ fontSize: 14, marginBottom: 4 }}>{req.title}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>🏗️ {OBJECT_TYPE_LABELS[req.objectType] || req.objectType}</div>
@@ -91,14 +94,14 @@ export default function ExpertisePage() {
                   <div style={{ width: 120, fontSize: 13, fontWeight: 600 }}>💰 {req.budget || 'По договор.'}</div>
                   <div style={{ width: 100, fontSize: 12, color: 'var(--text-muted)' }}>💬 {req.responsesCount} откл.</div>
                   <div style={{ width: 140 }}>
-                    <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12, width: '100%' }} onClick={() => notify('Отклик на экспертизу — в разработке')}>Откликнуться</button>
+                    <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12, width: '100%' }} onClick={(ev) => { ev.stopPropagation(); openDetail(req.id); }}>Открыть</button>
                   </div>
                 </div>
               );
             }
 
             return (
-            <div key={req.id} className="order-card" style={{ display: 'flex', flexDirection: viewMode === 'grid' ? 'column' : 'row', overflow: 'hidden', padding: 0, gap: viewMode === 'list' ? 24 : 0 }}>
+            <div key={req.id} className="order-card" style={{ display: 'flex', flexDirection: viewMode === 'grid' ? 'column' : 'row', overflow: 'hidden', padding: 0, gap: viewMode === 'list' ? 24 : 0, cursor: 'pointer' }} onClick={() => openDetail(req.id)}>
               
               {/* Thumbnail Top / Left */}
               <div style={{
@@ -173,7 +176,7 @@ export default function ExpertisePage() {
                       </span>
                       откликов
                     </span>
-                    <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: 13, fontWeight: 600 }} onClick={() => notify('Отклик на экспертизу — в разработке')}>Откликнуться</button>
+                    <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: 13, fontWeight: 600 }} onClick={(ev) => { ev.stopPropagation(); openDetail(req.id); }}>Открыть</button>
                   </span>
                 </div>
               </div>
