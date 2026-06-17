@@ -1,16 +1,24 @@
+// @ts-nocheck
 'use client';
+
+/* Настройки — новый дизайн «Функция» (перенос Settings из Cloud Design).
+   Вся логика сохранена: useApp (user/updateUser/logout), локальная форма
+   профиля, синхронизация из localStorage, условный блок СРО, индикатор
+   «Сохранено». Меняется только визуальный слой, заскоуплено под .fx. */
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/store';
 import { UserRole } from '@/lib/types';
 import { REGIONS } from '@/lib/constants';
+import { Icon } from '../../_orders/icons';
+import '../../_orders/orders.css';
 
 const ROLES: { value: UserRole; label: string; icon: string }[] = [
-  { value: 'customer', label: 'Заказчик', icon: '🏢' },
-  { value: 'designer', label: 'Проектировщик', icon: '👷' },
-  { value: 'expert', label: 'Эксперт', icon: '🔍' },
-  { value: 'manufacturer', label: 'Производитель', icon: '🏭' },
+  { value: 'customer', label: 'Заказчик', icon: 'building' },
+  { value: 'designer', label: 'Проектировщик', icon: 'pen' },
+  { value: 'expert', label: 'Эксперт', icon: 'shield' },
+  { value: 'manufacturer', label: 'Производитель', icon: 'stamp' },
 ];
 
 export default function SettingsPage() {
@@ -39,13 +47,15 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="empty-state animate-in">
-        <div className="empty-state-icon">🔒</div>
-        <div className="empty-state-title">Необходима авторизация</div>
-        <p style={{ color: 'var(--text-muted)', marginTop: 8 }}>
-          Войдите, чтобы управлять настройками профиля.
-        </p>
-        <Link href="/auth" className="btn btn-primary" style={{ marginTop: 16 }}>Войти</Link>
+      <div className="fx animate-in">
+        <div className="empty">
+          <div className="empty__icon"><Icon name="shield" size={28} /></div>
+          <div className="section-title" style={{ marginBottom: 8 }}>Необходима авторизация</div>
+          <p className="dim" style={{ fontSize: 14, margin: 0 }}>
+            Войдите, чтобы управлять настройками профиля.
+          </p>
+          <Link href="/auth" className="btn btn-primary mt16">Войти</Link>
+        </div>
       </div>
     );
   }
@@ -59,134 +69,141 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="animate-in" style={{ maxWidth: 760 }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700 }}>Настройки</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>
-          Управление профилем и аккаунтом
-        </p>
+    <div className="fx animate-in">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Настройки</h1>
+          <p className="page-sub">Управление профилем и аккаунтом</p>
+        </div>
       </div>
 
-      <form onSubmit={handleSave}>
-        {/* Профиль */}
-        <div className="card" style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Профиль</h2>
+      <div className="settings-wrap">
+        <form onSubmit={handleSave}>
+          {/* Профиль */}
+          <div className="card">
+            <h3 className="section-title" style={{ marginBottom: 18 }}>Профиль</h3>
 
-          <div className="form-group">
-            <label className="form-label">Роль на платформе</label>
-            <div className="role-selector">
+            <div className="overline" style={{ marginBottom: 12 }}>Роль на платформе</div>
+            <div className="grid-2" style={{ gap: 12, marginBottom: 22 }}>
               {ROLES.map((r) => (
-                <div
+                <button
+                  type="button"
                   key={r.value}
-                  className={`role-option ${role === r.value ? 'selected' : ''}`}
+                  className={'rolecard' + (role === r.value ? ' is-sel' : '')}
                   onClick={() => { setRole(r.value); setSaved(false); }}
                 >
-                  <div className="role-option-icon">{r.icon}</div>
-                  <div className="role-option-label">{r.label}</div>
+                  <Icon name={r.icon} size={24} />
+                  <span>{r.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="col gap16">
+              <div className="field">
+                <label>ФИО / Название компании</label>
+                <input
+                  className="input"
+                  placeholder="Иванов Иван Иванович"
+                  value={name}
+                  onChange={(e) => { setName(e.target.value); setSaved(false); }}
+                  required
+                />
+              </div>
+
+              <div className="field">
+                <label>Компания</label>
+                <input
+                  className="input"
+                  placeholder="ООО «Проект»"
+                  value={company}
+                  onChange={(e) => { setCompany(e.target.value); setSaved(false); }}
+                />
+              </div>
+
+              <div className="grid-2" style={{ gap: 16 }}>
+                <div className="field">
+                  <label>Телефон</label>
+                  <input
+                    className="input"
+                    type="tel"
+                    placeholder="+7 (___) ___-__-__"
+                    value={phone}
+                    onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
+                  />
                 </div>
-              ))}
+
+                <div className="field">
+                  <label>Регион</label>
+                  <select
+                    className="input"
+                    value={region}
+                    onChange={(e) => { setRegion(e.target.value); setSaved(false); }}
+                  >
+                    <option value="">Не указан</option>
+                    {REGIONS.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {showSro && (
+                <div className="field">
+                  <label>Номер СРO</label>
+                  <input
+                    className="input"
+                    placeholder="СРО-П-123-4567890"
+                    value={sroNumber}
+                    onChange={(e) => { setSroNumber(e.target.value); setSaved(false); }}
+                  />
+                </div>
+              )}
+
+              <div className="field">
+                <label>О себе</label>
+                <textarea
+                  className="input"
+                  rows={4}
+                  placeholder="Краткое описание специализации и опыта"
+                  value={description}
+                  onChange={(e) => { setDescription(e.target.value); setSaved(false); }}
+                />
+              </div>
+            </div>
+
+            <div className="row gap16 mt24">
+              <button type="submit" className="btn btn-primary">Сохранить изменения</button>
+              {saved && (
+                <span className="row gap8" style={{ color: 'var(--green)', fontSize: 14, fontWeight: 600 }}>
+                  <Icon name="check" size={16} /> Сохранено
+                </span>
+              )}
             </div>
           </div>
+        </form>
 
-          <div className="form-group">
-            <label className="form-label">ФИО / Название компании</label>
-            <input
-              className="form-input"
-              placeholder="Иванов Иван Иванович"
-              value={name}
-              onChange={(e) => { setName(e.target.value); setSaved(false); }}
-              required
-            />
+        {/* Аккаунт */}
+        <div className="card" style={{ marginTop: 24 }}>
+          <h3 className="section-title" style={{ marginBottom: 18 }}>Аккаунт</h3>
+
+          <div className="field" style={{ marginBottom: 8 }}>
+            <label>Email (логин)</label>
+            <input className="input" value={user.email} disabled readOnly style={{ opacity: .7 }} />
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Компания</label>
-            <input
-              className="form-input"
-              placeholder="ООО «Проект»"
-              value={company}
-              onChange={(e) => { setCompany(e.target.value); setSaved(false); }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Телефон</label>
-            <input
-              className="form-input"
-              type="tel"
-              placeholder="+7 (___) ___-__-__"
-              value={phone}
-              onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Регион</label>
-            <select
-              className="form-select"
-              value={region}
-              onChange={(e) => { setRegion(e.target.value); setSaved(false); }}
-            >
-              <option value="">Не указан</option>
-              {REGIONS.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          </div>
-
-          {showSro && (
-            <div className="form-group">
-              <label className="form-label">Номер СРO</label>
-              <input
-                className="form-input"
-                placeholder="СРО-П-123-4567890"
-                value={sroNumber}
-                onChange={(e) => { setSroNumber(e.target.value); setSaved(false); }}
-              />
-            </div>
-          )}
-
-          <div className="form-group">
-            <label className="form-label">О себе</label>
-            <textarea
-              className="form-textarea"
-              rows={4}
-              placeholder="Краткое описание специализации и опыта"
-              value={description}
-              onChange={(e) => { setDescription(e.target.value); setSaved(false); }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 8 }}>
-            <button type="submit" className="btn btn-primary">Сохранить изменения</button>
-            {saved && (
-              <span style={{ color: 'var(--status-success)', fontSize: 14, fontWeight: 600 }}>
-                ✓ Сохранено
-              </span>
-            )}
-          </div>
-        </div>
-      </form>
-
-      {/* Аккаунт */}
-      <div className="card">
-        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Аккаунт</h2>
-
-        <div className="form-group">
-          <label className="form-label">Email (логин)</label>
-          <input className="form-input" value={user.email} disabled readOnly />
-          <p style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 6 }}>
+          <p className="dim" style={{ fontSize: 13, margin: '0 0 22px' }}>
             Email используется для входа и не редактируется.
           </p>
-        </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-          <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-            Выйти из аккаунта на этом устройстве
-          </span>
-          <button type="button" className="btn btn-ghost" onClick={() => logout()}>
-            Выйти
-          </button>
+          <hr className="divider" style={{ marginBottom: 20 }} />
+
+          <div className="row between">
+            <div style={{ fontWeight: 600, fontSize: 14 }}>
+              Выйти из аккаунта на этом устройстве
+            </div>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => logout()}>
+              <Icon name="logout" size={15} /> Выйти
+            </button>
+          </div>
         </div>
       </div>
     </div>

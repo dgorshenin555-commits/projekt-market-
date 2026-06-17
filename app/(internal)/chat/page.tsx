@@ -1,8 +1,12 @@
+// @ts-nocheck
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/store';
+import { Icon } from '../../_orders/icons';
+import { Avatar } from '../../_orders/shared';
+import '../../_orders/orders.css';
 
 // --- Моковые типы и данные ---
 type ChatMessage = {
@@ -88,6 +92,9 @@ const MOCK_CHATS: ChatRoom[] = [
   }
 ];
 
+const initials = (name: string, type: 'customer' | 'designer') =>
+  (name || '').replace(/[^А-ЯA-Zа-яa-z]/g, '').slice(0, 2).toUpperCase() || (type === 'designer' ? 'Д' : 'З');
+
 export default function ChatPage() {
   const { notify } = useApp();
   const [chats, setChats] = useState<ChatRoom[]>(MOCK_CHATS);
@@ -95,11 +102,11 @@ export default function ChatPage() {
   const [activeChatId, setActiveChatId] = useState<string>(chats[0].id);
   const [newMessage, setNewMessage] = useState('');
   const [search, setSearch] = useState('');
-  
+
   // Состояния для десктопа и мобилки
   const [showInfo, setShowInfo] = useState(true);
   const [mobileView, setMobileView] = useState<'list' | 'chat' | 'info'>('list');
-  
+
   const activeChat = chats.find(c => c.id === activeChatId) || chats[0];
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -111,7 +118,7 @@ export default function ChatPage() {
   // Mark all as read when opening
   useEffect(() => {
     if (activeChat && activeChat.unreadCount > 0) {
-      setChats(prev => prev.map(c => 
+      setChats(prev => prev.map(c =>
         c.id === activeChat.id ? { ...c, unreadCount: 0 } : c
       ));
     }
@@ -144,16 +151,14 @@ export default function ChatPage() {
     setNewMessage('');
   };
 
-  const filteredChats = chats.filter(c => 
-    c.recipientName.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredChats = chats.filter(c =>
+    c.recipientName.toLowerCase().includes(search.toLowerCase()) ||
     c.orderTitle.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div className="animate-in chat-layout" style={{
+    <div className="fx animate-in chat-layout" style={{
       height: 'calc(100vh - 100px)', // adjust based on header
-      display: 'flex',
-      gap: 16,
       marginTop: -8, // compensate for page-container padding to max height
       position: 'relative',
       ...({
@@ -163,442 +168,292 @@ export default function ChatPage() {
         '--desktop-info-display': showInfo ? 'block' : 'none',
       } as React.CSSProperties)
     }}>
-      
-      {/* 1. Left Sidebar - Chat List */}
-      <div className="card chat-sidebar" style={{ 
-        width: 320, 
-        display: 'flex', 
-        flexDirection: 'column', 
+
+      <div className="chat card" style={{
+        height: '100%',
         padding: 0,
         overflow: 'hidden',
-        border: '1px solid var(--border)' 
+        // переопределяем правую колонку видимостью деталей (логика showInfo)
+        gridTemplateColumns: showInfo ? '340px 1fr 300px' : '340px 1fr',
       }}>
-        {/* Chat List Header */}
-        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Коммуникации</h2>
-          <div className="dsn-search-wrapper" style={{ margin: 0, background: 'var(--bg-primary)' }}>
-            <span className="dsn-search-icon">🔍</span>
-            <input
-              type="text"
-              placeholder="Поиск сообщений..."
-              className="dsn-search-input"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ fontSize: 13, height: 36 }}
-            />
+
+        {/* 1. Left Sidebar - Chat List */}
+        <aside className="chat__list chat-sidebar">
+          {/* Chat List Header */}
+          <h2 className="section-title" style={{ padding: '20px 20px 0', margin: 0 }}>Коммуникации</h2>
+          <div style={{ padding: 16 }}>
+            <div className="topbar__search" style={{ maxWidth: 'none' }}>
+              <Icon name="search" />
+              <input
+                type="text"
+                placeholder="Поиск сообщений…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Chats Array */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {filteredChats.map(chat => {
-            const isActive = chat.id === activeChatId;
-            return (
-              <div 
-                key={chat.id}
-                onClick={() => {
-                  setActiveChatId(chat.id);
-                  setMobileView('chat');
-                }}
-                style={{
-                  padding: '16px 20px',
-                  borderBottom: '1px solid var(--border)',
-                  background: isActive ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
-                  cursor: 'pointer',
-                  borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
-                  transition: 'background 0.2s ease',
-                  display: 'flex',
-                  gap: 12,
-                  alignItems: 'center'
-                }}
-              >
-                {/* Avatar */}
-                <div style={{ position: 'relative' }}>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: '50%',
-                    background: chat.recipientType === 'designer' ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'linear-gradient(135deg, #43e97b, #38f9d7)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'white', fontWeight: 700, fontSize: 16
-                  }}>
-                    {chat.recipientType === 'designer' ? 'Д' : 'З'}
+          {/* Chats Array */}
+          <div className="col" style={{ flex: 1, overflowY: 'auto' }}>
+            {filteredChats.map(chat => {
+              const isActive = chat.id === activeChatId;
+              return (
+                <button
+                  key={chat.id}
+                  className={'convitem' + (isActive ? ' is-active' : '')}
+                  onClick={() => {
+                    setActiveChatId(chat.id);
+                    setMobileView('chat');
+                  }}
+                >
+                  {/* Avatar */}
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <Avatar text={initials(chat.recipientName, chat.recipientType)} size={44} />
+                    {chat.unreadCount > 0 && (
+                      <div style={{
+                        position: 'absolute', top: -2, right: -2,
+                        background: 'var(--red)', color: 'white',
+                        fontSize: 10, fontWeight: 700, width: 18, height: 18,
+                        borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: '2px solid var(--surface)'
+                      }}>
+                        {chat.unreadCount}
+                      </div>
+                    )}
                   </div>
-                  {chat.unreadCount > 0 && (
-                    <div style={{
-                      position: 'absolute', top: -2, right: -2,
-                      background: 'var(--status-error)', color: 'white',
-                      fontSize: 10, fontWeight: 700, width: 18, height: 18,
-                      borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      border: '2px solid var(--bg-secondary)'
-                    }}>
-                      {chat.unreadCount}
-                    </div>
-                  )}
-                </div>
 
-                {/* Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <div style={{ fontSize: 14, fontWeight: isActive ? 700 : 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {chat.recipientName}
+                  {/* Content */}
+                  <div className="grow" style={{ minWidth: 0 }}>
+                    <div className="row between">
+                      <span className="convitem__name">{chat.recipientName}</span>
+                      <span className="dim" style={{ fontSize: 11.5, color: chat.unreadCount > 0 ? 'var(--accent-2)' : undefined, flexShrink: 0 }}>
+                        {chat.lastMessageTime}
+                      </span>
                     </div>
-                    <div style={{ fontSize: 11, color: chat.unreadCount > 0 ? 'var(--accent)' : 'var(--text-muted)', flexShrink: 0 }}>
-                      {chat.lastMessageTime}
-                    </div>
+                    <div className="convitem__order">{chat.orderTitle}</div>
+                    <div className="convitem__last" style={{ color: chat.unreadCount > 0 ? 'var(--text)' : undefined }}>{chat.lastMessage}</div>
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--accent)', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {chat.orderTitle}
-                  </div>
-                  <div style={{ fontSize: 13, color: chat.unreadCount > 0 ? 'var(--text-primary)' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {chat.lastMessage}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
 
-      {/* 2. Main Chat Window */}
-      <div className="card chat-main" style={{ 
-        flex: 1, 
-        padding: 0, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        overflow: 'hidden',
-        border: '1px solid var(--border)' 
-      }}>
-        {activeChat ? (
-          <>
-            {/* Header */}
-            <div style={{ 
-              padding: '20px 24px', 
-              borderBottom: '1px solid var(--border)', 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              background: 'var(--bg-secondary)',
-              zIndex: 10
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                 <button 
-                  className="mobile-back-btn" 
+        {/* 2. Main Chat Window */}
+        <section className="chat__thread chat-main">
+          {activeChat ? (
+            <>
+              {/* Header */}
+              <header className="chat__head">
+                <button
+                  className="mobile-back-btn iconbtn"
                   onClick={() => setMobileView('list')}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-primary)', padding: '0 8px 0 0', cursor: 'pointer', fontSize: 24 }}
-                 >
-                   ‹
-                 </button>
-                 <div style={{
-                    width: 48, height: 48, borderRadius: '50%',
-                    background: activeChat.recipientType === 'designer' ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'linear-gradient(135deg, #43e97b, #38f9d7)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'white', fontWeight: 700, fontSize: 18,
-                    flexShrink: 0
-                  }}>
-                    {activeChat.recipientType === 'designer' ? 'Д' : 'З'}
-                 </div>
-                 <div style={{ minWidth: 0 }}>
-                   <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeChat.recipientName}</h2>
-                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
-                     {activeChat.recipientType === 'designer' ? 'Проектировщик' : 'Заказчик'}
-                     <span>•</span>
-                     <span style={{ color: 'var(--status-success)' }}>В сети</span>
-                   </div>
-                 </div>
-              </div>
+                  style={{ flexShrink: 0 }}
+                >
+                  <Icon name="chevR" size={18} style={{ transform: 'scaleX(-1)' }} />
+                </button>
+                <Avatar text={initials(activeChat.recipientName, activeChat.recipientType)} size={42} />
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeChat.recipientName}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--green)', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+                    <span className="dim" style={{ color: 'var(--text-mute)' }}>{activeChat.recipientType === 'designer' ? 'Проектировщик' : 'Заказчик'}</span>
+                    <span className="dim" style={{ color: 'var(--text-mute)' }}>•</span>
+                    <span style={{ color: 'var(--green)' }}>● В сети</span>
+                  </div>
+                </div>
 
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button 
-                  className="btn btn-secondary btn-sm chat-desktop-info-btn" 
+                <button
+                  className="btn btn-ghost btn-sm chat-desktop-info-btn"
                   onClick={() => setShowInfo(!showInfo)}
                 >
-                   {showInfo ? 'Скрыть детали' : 'Информация'}
+                  {showInfo ? 'Скрыть детали' : 'Информация'}
                 </button>
-                <button 
-                  className="btn btn-secondary btn-sm chat-mobile-info-btn" 
+                <button
+                  className="iconbtn chat-mobile-info-btn"
                   onClick={() => setMobileView('info')}
                 >
-                   ℹ️
+                  <Icon name="comment" size={17} />
                 </button>
-              </div>
-            </div>
+              </header>
 
-            {/* Messages Area */}
-            <div style={{ 
-              flex: 1, 
-              padding: '24px', 
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-              background: 'var(--bg-input)'
-            }}>
-              {activeChat.messages.map((msg, i) => {
-                const isMe = msg.senderId === CURRENT_USER_ID;
-                const showAvatar = !isMe && (i === 0 || activeChat.messages[i-1].senderId !== msg.senderId);
+              {/* Messages Area */}
+              <div className="chat__body">
+                {activeChat.messages.map((msg, i) => {
+                  const isMe = msg.senderId === CURRENT_USER_ID;
+                  const showAvatar = !isMe && (i === 0 || activeChat.messages[i - 1].senderId !== msg.senderId);
 
-                return (
-                  <div key={msg.id} style={{
-                    display: 'flex',
-                    flexDirection: isMe ? 'row-reverse' : 'row',
-                    gap: 12,
-                    alignItems: 'flex-end'
-                  }}>
-                    {/* Avatar placeholder for recipient */}
-                    {!isMe ? (
-                      <div className="chat-avatar-placeholder" style={{ width: 32 }}>
-                        {showAvatar && (
-                          <div style={{
-                            width: 32, height: 32, borderRadius: '50%',
-                            background: activeChat.recipientType === 'designer' ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'linear-gradient(135deg, #43e97b, #38f9d7)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: 'white', fontWeight: 700, fontSize: 12
-                          }}>
-                            {activeChat.recipientType === 'designer' ? 'Д' : 'З'}
+                  return (
+                    <div key={msg.id} className={'bubble-row' + (isMe ? ' out' : '')}>
+                      {/* Avatar placeholder for recipient */}
+                      {!isMe ? (
+                        <div className="chat-avatar-placeholder" style={{ width: 30, flexShrink: 0 }}>
+                          {showAvatar && (
+                            <Avatar text={initials(activeChat.recipientName, activeChat.recipientType)} size={30} />
+                          )}
+                        </div>
+                      ) : null}
+
+                      {/* Bubble */}
+                      <div className={'bubble' + (isMe ? ' bubble--out' : '')}>
+                        <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+
+                        {/* Attachments */}
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                            {msg.attachments.map((att, aIdx) => (
+                              <div key={aIdx} style={{
+                                display: 'flex', gap: 8, alignItems: 'center',
+                                background: isMe ? 'rgba(255,255,255,0.18)' : 'var(--surface-3)',
+                                padding: '8px 12px', borderRadius: 'var(--r-sm)', cursor: 'pointer'
+                              }}>
+                                <Icon name="file" size={16} />
+                                <div>
+                                  <div style={{ fontSize: 12, fontWeight: 600 }}>{att.name}</div>
+                                  <div style={{ fontSize: 10, opacity: 0.75 }}>{att.size}</div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
-                      </div>
-                    ) : null}
 
-                    {/* Bubble */}
-                    <div style={{
-                      maxWidth: '85%',
-                      background: isMe ? 'var(--accent)' : 'var(--bg-secondary)',
-                      padding: '12px 16px',
-                      borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                      boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-                      border: isMe ? 'none' : '1px solid var(--border)'
-                    }}>
-                      <div style={{ 
-                        fontSize: 14, 
-                        lineHeight: 1.5, 
-                        color: isMe ? 'white' : 'var(--text-primary)',
-                        whiteSpace: 'pre-wrap'
-                      }}>
-                        {msg.text}
-                      </div>
-                      
-                      {/* Attachments */}
-                      {msg.attachments && msg.attachments.length > 0 && (
-                        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                          {msg.attachments.map((att, aIdx) => (
-                            <div key={aIdx} style={{
-                              display: 'flex', gap: 8, alignItems: 'center',
-                              background: isMe ? 'rgba(255,255,255,0.2)' : 'var(--bg-input)',
-                              padding: '8px 12px', borderRadius: 8, cursor: 'pointer'
-                            }}>
-                              <span style={{ fontSize: 16 }}>📁</span>
-                              <div>
-                                <div style={{ fontSize: 12, fontWeight: 600, color: isMe ? 'white' : 'var(--text-primary)' }}>{att.name}</div>
-                                <div style={{ fontSize: 10, color: isMe ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)' }}>{att.size}</div>
-                              </div>
-                            </div>
-                          ))}
+                        {/* Meta info (time, read receipt) */}
+                        <div className="bubble__time">
+                          {msg.timestamp}
+                          {isMe && (
+                            <Icon name="check" size={12} style={{ marginLeft: 4, opacity: msg.isRead ? 1 : 0.6 }} />
+                          )}
                         </div>
-                      )}
-
-                      {/* Meta info (time, read receipt) */}
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: 6,
-                        alignItems: 'center',
-                        marginTop: 4,
-                        fontSize: 10,
-                        color: isMe ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)'
-                      }}>
-                        {msg.timestamp}
-                        {isMe && (
-                          <span style={{ fontSize: 14, lineHeight: 1 }}>{msg.isRead ? '✓✓' : '✓'}</span>
-                        )}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
 
-            {/* Input Area */}
-            <div style={{ padding: '16px 20px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)' }}>
-              <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-                <button type="button" onClick={() => notify('Прикрепление файлов — в разработке')} style={{
-                   width: 44, height: 44, borderRadius: '50%',
-                   background: 'var(--bg-input)', border: 'none',
-                   color: 'var(--text-secondary)', fontSize: 20,
-                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                   cursor: 'pointer', flexShrink: 0
-                }}>
-                  📎
+              {/* Input Area */}
+              <form className="chat__compose" onSubmit={handleSendMessage}>
+                <button type="button" className="iconbtn" onClick={() => notify('Прикрепление файлов — в разработке')}>
+                  <Icon name="paperclip" size={17} />
                 </button>
-                <div style={{ flex: 1, position: 'relative' }}>
-                  <textarea 
-                    placeholder="Сообщение..." 
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e);
-                      }
-                    }}
-                    style={{
-                      width: '100%',
-                      minHeight: 44,
-                      maxHeight: 120,
-                      background: 'var(--bg-input)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-md)',
-                      padding: '12px 16px',
-                      color: 'var(--text-primary)',
-                      fontFamily: 'inherit',
-                      resize: 'none',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-                <button 
-                  type="submit" 
+                <textarea
+                  className="input grow"
+                  placeholder="Сообщение…"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
+                  style={{ minHeight: 46, maxHeight: 120, resize: 'none', padding: '12px 16px' }}
+                />
+                <button
+                  type="submit"
                   disabled={!newMessage.trim()}
                   className="btn btn-primary"
-                  style={{ width: 44, height: 44, padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                  style={{ width: 46, padding: 0 }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                  </svg>
+                  <Icon name="send" size={17} />
                 </button>
               </form>
+            </>
+          ) : (
+            <div className="empty" style={{ flex: 1, justifyContent: 'center' }}>
+              <Icon name="comment" size={40} style={{ color: 'var(--text-mute)', marginBottom: 12 }} />
+              <h3 style={{ fontSize: 18, marginBottom: 8 }}>Выберите чат</h3>
+              <p className="dim" style={{ margin: 0 }}>Для начала общения выберите собеседника в списке слева.</p>
             </div>
-          </>
-        ) : (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>💬</div>
-              <h3 style={{ fontSize: 18, marginBottom: 8, color: 'var(--text-primary)' }}>Выберите чат</h3>
-              <p>Для начала общения выберите собеседника в списке слева.</p>
+          )}
+        </section>
+
+        {/* 3. Right Sidebar - Order Info */}
+        {activeChat && (
+          <aside className="chat__info chat-info">
+            {/* Mobile Header for Info */}
+            <div className="chat-mobile-info-header" style={{ display: 'none', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Детали заявки</h2>
+              <button className="iconbtn" onClick={() => setMobileView('chat')} style={{ fontSize: 22 }}>×</button>
             </div>
-          </div>
+
+            <div className="overline" style={{ marginBottom: 12 }}>Связанная заявка</div>
+            <h3 style={{ margin: '0 0 14px', fontSize: 16, lineHeight: 1.3 }}>{activeChat.orderTitle}</h3>
+            <div className="card" style={{ background: 'var(--surface-2)', padding: 14, marginBottom: 16 }}>
+              <div className="dim" style={{ fontSize: 12 }}>Бюджет</div>
+              <div className="price mt4">{activeChat.budget}</div>
+            </div>
+            <Link href={`/orders/detail?id=${activeChat.orderId}`} className="btn btn-ghost btn-block" style={{ textDecoration: 'none', marginBottom: 24 }}>
+              Открыть заявку
+            </Link>
+
+            {/* Files/Media shared */}
+            <div className="overline" style={{ marginBottom: 12 }}>Вложения</div>
+            <div className="col gap10">
+              {/* Just showing static files for realism */}
+              <div className="attach">
+                <div className="attach__ic"><Icon name="file" size={16} /></div>
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>ТЗ_Архитектура.pdf</div>
+                  <div className="dim" style={{ fontSize: 12 }}>1.2 MB</div>
+                </div>
+                <Icon name="download" size={15} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+              </div>
+
+              <div className="attach">
+                <div className="attach__ic"><Icon name="layers" size={16} /></div>
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Сетка_Колонн.dwg</div>
+                  <div className="dim" style={{ fontSize: 12 }}>4.5 MB</div>
+                </div>
+                <Icon name="download" size={15} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+              </div>
+            </div>
+          </aside>
         )}
       </div>
 
-      {/* 3. Right Sidebar - Order Info */}
-      {activeChat && (
-        <div className="card chat-info" style={{ 
-          width: 280, 
-          padding: 0,
-          border: '1px solid var(--border)',
-          overflowY: 'auto',
-          animation: 'slideInRight 0.3s ease'
-        }}>
-          {/* Mobile Header for Info */}
-          <div className="chat-mobile-info-header" style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'none', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Детали заявки</h2>
-            <button onClick={() => setMobileView('chat')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: 'var(--text-primary)' }}>×</button>
-          </div>
-
-          <div style={{ padding: '20px', borderBottom: '1px solid var(--border)' }}>
-             <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 16 }}>
-               Связанная заявка
-             </h3>
-             <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 12, lineHeight: 1.4 }}>
-               {activeChat.orderTitle}
-             </div>
-             <div style={{ background: 'var(--bg-input)', padding: '10px 14px', borderRadius: 8, marginBottom: 16 }}>
-               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Бюджет</div>
-               <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{activeChat.budget}</div>
-             </div>
-             <Link href={`/orders/detail?id=${activeChat.orderId}`} className="btn btn-secondary btn-block" style={{ textDecoration: 'none', textAlign: 'center' }}>
-               Открыть заявку
-             </Link>
-          </div>
-
-          {/* Files/Media shared */}
-          <div style={{ padding: '20px' }}>
-             <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 16 }}>
-               Вложения
-             </h3>
-             
-             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-               {/* Just showing static files for realism */}
-               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                 <div style={{ width: 40, height: 40, background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                   П
-                 </div>
-                 <div style={{ flex: 1, minWidth: 0 }}>
-                   <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>ТЗ_Архитектура.pdf</div>
-                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>1.2 MB</div>
-                 </div>
-               </div>
-               
-               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                 <div style={{ width: 40, height: 40, background: 'rgba(16, 185, 129, 0.1)', color: 'var(--status-success)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                   Ч
-                 </div>
-                 <div style={{ flex: 1, minWidth: 0 }}>
-                   <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Сетка_Колонн.dwg</div>
-                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>4.5 MB</div>
-                 </div>
-               </div>
-             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Basic Keyframe & Media Query polyfill via inline style */}
+      {/* Media Query polyfill via inline style (мобильная/десктоп логика видимости) */}
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes slideInRight {
-          from { opacity: 0; transform: translateX(20px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-
-        .chat-info {
+        .fx .chat-info {
            display: var(--desktop-info-display);
         }
-        .chat-sidebar {
+        .fx .chat-sidebar {
            display: flex;
         }
-        .chat-main {
+        .fx .chat-main {
            display: flex;
         }
-        .mobile-back-btn { display: none; }
-        .chat-mobile-info-btn { display: none; }
+        .fx .mobile-back-btn { display: none; }
+        .fx .chat-mobile-info-btn { display: none; }
 
         @media (max-width: 768px) {
           .chat-layout {
-            gap: 0 !important;
             margin-top: 0 !important;
             height: calc(100vh - 80px) !important;
           }
-          .chat-sidebar {
+          .fx .chat {
+            grid-template-columns: 1fr !important;
+          }
+          .fx .chat-sidebar {
             display: var(--mobile-list-display) !important;
-            width: 100% !important;
-            border-radius: 0 !important;
-            border: none !important;
-            border-top: 1px solid var(--border) !important;
+            border-right: none !important;
           }
-          .chat-main {
+          .fx .chat-main {
             display: var(--mobile-chat-display) !important;
-            width: 100% !important;
-            border-radius: 0 !important;
-            border: none !important;
-            border-top: 1px solid var(--border) !important;
           }
-          .chat-info {
+          .fx .chat-info {
             display: var(--mobile-info-display) !important;
-            width: 100% !important;
-            border-radius: 0 !important;
-            border: none !important;
-            border-top: 1px solid var(--border) !important;
+            border-left: none !important;
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             z-index: 50;
-            background: var(--bg-primary);
+            background: var(--surface);
           }
-          .mobile-back-btn { display: flex !important; }
-          .chat-mobile-info-btn { display: flex !important; }
-          .chat-desktop-info-btn { display: none !important; }
-          .chat-mobile-info-header { display: flex !important; }
-          .chat-avatar-placeholder { display: none !important; }
+          .fx .mobile-back-btn { display: flex !important; }
+          .fx .chat-mobile-info-btn { display: flex !important; }
+          .fx .chat-desktop-info-btn { display: none !important; }
+          .fx .chat-mobile-info-header { display: flex !important; }
+          .fx .chat-avatar-placeholder { display: none !important; }
         }
       `}} />
     </div>
