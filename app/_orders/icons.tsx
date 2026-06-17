@@ -40,6 +40,7 @@ const paths = {
   send:       <><path d="M21 4L3 11l7 3 3 7z"/><path d="M21 4L10 14"/></>,
   download:   <><path d="M12 4v11M7.5 11L12 15.5 16.5 11M5 20h14"/></>,
   file:       <><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></>,
+  copy:       <><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></>,
   list:       <><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></>,
   columns:    <><rect x="3" y="4" width="8" height="16" rx="1.5"/><rect x="13" y="4" width="8" height="16" rx="1.5"/></>,
   filter:     <><path d="M3 5h18l-7 8v5l-4 2v-7z"/></>,
