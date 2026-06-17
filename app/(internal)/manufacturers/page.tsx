@@ -555,7 +555,7 @@ export default function ManufacturersPage() {
                       <div className="solm__makers">{ANSWER_MAKERS.map((m) => (
                         <button key={m.id} type="button" className="solm__maker solm__maker--btn" onClick={() => { setOpenSol(null); setTab('prod'); setSelectedMfr(m); }} title={'Открыть «' + m.name + '»'}>
                           <div className="manuf__logo" style={{ width: 34, height: 34, ...grad(...mfrGrad(m.id)) }}><Icon name="factory" size={16} /></div>
-                          <div style={{ minWidth: 0 }}><b>{m.name}</b><span className="dim">★ {m.rating}</span></div>
+                          <div style={{ minWidth: 0 }}><b>{m.name}</b><span className="dim row gap5"><Icon name="star" size={12} style={{ color: 'var(--amber)' }} /> {m.rating}</span></div>
                           <Icon name="arrowRight" size={14} className="solm__maker-go" />
                         </button>
                       ))}</div>
