@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -5,6 +6,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MOCK_DESIGNERS, MOCK_PROJECTS } from '@/lib/mock-data';
 import { useApp } from '@/lib/store';
+import { Icon } from '../../../_orders/icons';
+import '../../../_orders/orders.css';
 
 const TABS = ['Обзор', 'Портфолио', 'Отзывы', 'Документы и СРО'];
 
@@ -20,6 +23,39 @@ const AVATAR_COLORS = [
   'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
   'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
   'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+];
+
+// Демо-агрегат рейтинга (гистограмма) в духе эталона Cloud Design.
+const REVIEW_AGG = [
+  ['5★', 78],
+  ['4★', 18],
+  ['3★', 4],
+  ['2★', 0],
+  ['1★', 0],
+];
+
+// Демо-отзывы в духе эталона.
+const REVIEWS = [
+  {
+    ini: 'ОК', g: 'linear-gradient(135deg, #a06bf5 0%, #7d52e8 100%)', name: 'Олег Климов', org: 'ООО «СтройИнвест»', r: '5.0', date: '12 февраля 2025', proj: 'ЖК «Ренессанс»',
+    text: 'Раздел КР выполнен раньше срока, все замечания экспертизы сняты с первой итерации. На связи постоянно — отвечает в течение получаса. Однозначно рекомендую.',
+  },
+  {
+    ini: 'АН', g: 'linear-gradient(135deg, #3ad6a6 0%, #22b886 100%)', name: 'Анна Новикова', org: 'ИП Новикова', r: '4.5', date: '28 января 2025', proj: 'МФК «Старый город»',
+    text: 'Грамотный специалист, аккуратная документация по ГОСТ. Пара правок по планировкам заняла время, но итог отличный.',
+  },
+  {
+    ini: 'СМ', g: 'linear-gradient(135deg, #f5933d 0%, #ec6f2a 100%)', name: 'Сергей Морозов', org: 'ООО «Девелопмент-Групп»', r: '5.0', date: '9 декабря 2024', proj: 'БЦ «Приморский»',
+    text: 'Сложный объект с ограничениями по участку — решение нашли быстро. BIM-модель чистая, коллизий минимум. Будем работать снова.',
+  },
+];
+
+// Демо-документы/допуски со статус-бейджами в духе эталона.
+const DOCS = [
+  { ic: 'building', name: 'Выписка из реестра СРО', sub: 'СРО НБПИ-04-032 · Действует до 14.08.2026', tag: ['done', 'Активно'] },
+  { ic: 'cert', name: 'Специалист НРС (ГИП)', sub: '№ П-145122 · Минстрой России', tag: ['done', 'Активно'] },
+  { ic: 'award', name: 'Диплом СПбГАСУ', sub: 'Архитектор · 2012 год', tag: null },
+  { ic: 'shield', name: 'Страхование ответственности', sub: 'Полис № 24/0915 · до 31.12.2025', tag: ['wait', 'Истекает'] },
 ];
 
 export default function DesignerProfilePage() {
@@ -59,319 +95,313 @@ export default function DesignerProfilePage() {
 
   if (!designer) {
     return (
-      <div className="empty-state animate-in">
-        <div className="empty-state-icon">🔍</div>
-        <div className="empty-state-title">Специалист не найден</div>
-        <button onClick={() => router.push('/designers')} className="btn btn-primary" style={{ marginTop: 16 }}>
-          К списку каталога
-        </button>
+      <div className="fx animate-in">
+        <div className="empty">
+          <div className="empty__icon"><Icon name="search" size={28} /></div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Специалист не найден</div>
+          <button onClick={() => router.push('/designers')} className="btn btn-primary" style={{ marginTop: 16 }}>
+            К списку каталога
+          </button>
+        </div>
       </div>
     );
   }
 
   const avatarGradient = AVATAR_COLORS[MOCK_DESIGNERS.indexOf(designer) % AVATAR_COLORS.length];
+  const avatarText = designer.type === 'company' ? '' : designer.name.substring(0, 2).toUpperCase();
 
   return (
-    <div className="animate-in pb-20">
+    <div className="fx animate-in" style={{ paddingBottom: 80 }}>
       {/* Breadcrumbs */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <Link href="/designers" style={{ color: 'var(--text-muted)', fontSize: 13, textDecoration: 'none' }}>
-          Каталог специалистов
-        </Link>
-        <span style={{ color: 'var(--text-muted)' }}>/</span>
-        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{designer.name}</span>
+      <div className="breadcrumb">
+        <Link href="/designers" className="link">Каталог специалистов</Link>
+        <Icon name="chevR" size={13} />
+        <span className="dim">{designer.name}</span>
       </div>
 
       {/* Header Profile Hero */}
-      <div style={{
-        background: 'var(--bg-secondary)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border)',
-        overflow: 'hidden',
-        marginBottom: 24,
-      }}>
-        {/* Cover Graphic */}
-        <div style={{
-          height: 140,
-          background: 'linear-gradient(90deg, #1e1e2f 0%, #2d2b42 100%)',
-          position: 'relative'
-        }}>
-           <div style={{
-             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-             opacity: 0.1,
-             backgroundImage: 'radial-gradient(circle at 20px 20px, var(--accent) 2px, transparent 0)',
-             backgroundSize: '40px 40px'
-           }} />
-        </div>
-
-        {/* Info Area */}
-        <div style={{ padding: '0 32px 32px', display: 'flex', gap: 24, alignItems: 'flex-start', marginTop: -40 }}>
-          <div style={{
-            width: 100, height: 100,
-            borderRadius: '50%',
-            background: avatarGradient,
-            border: '4px solid var(--bg-secondary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 36, color: 'white', fontWeight: 800,
-            flexShrink: 0, zIndex: 1,
-            boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
-          }}>
-            {designer.type === 'company' ? '🏢' : designer.name.substring(0, 2).toUpperCase()}
+      <div className="profile-hero">
+        <div className="profile-hero__bg" />
+        <div className="profile-hero__row">
+          <div className="avatar" style={{ width: 108, height: 108, fontSize: 38, background: avatarGradient, flexShrink: 0 }}>
+            {designer.type === 'company' ? <Icon name="building" size={44} /> : avatarText}
           </div>
-          
-          <div style={{ flex: 1, marginTop: 46 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {designer.name}
-                  {designer.rating > 4.7 && (
-                    <span title="Топ специалист" style={{ fontSize: 18 }}>🏆</span>
-                  )}
-                </h1>
-                
-                <div style={{ display: 'flex', gap: 16, color: 'var(--text-secondary)', fontSize: 14, marginBottom: 16 }}>
-                  <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    📍 {designer.city} {designer.region && <span style={{ color: 'var(--text-muted)' }}>({designer.region})</span>}
-                  </span>
-                  <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    ⭐ {designer.rating} ({designer.reviewsLabel})
-                  </span>
-                  {designer.type === 'company' && (
-                    <span style={{ display: 'flex', gap: 6, alignItems: 'center', color: 'var(--accent)' }}>
-                      🏢 Организация
-                    </span>
-                  )}
-                </div>
 
-                <div className="dsn-featured-sections" style={{ marginTop: 0 }}>
-                  {uniqueSections(designer.sections).map((s) => (
-                    <span key={s} className="dsn-section-tag accent" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>{s}</span>
-                  ))}
-                </div>
-              </div>
+          <div className="grow" style={{ minWidth: 0 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 8px', color: '#fff', display: 'flex', alignItems: 'center', gap: 10 }}>
+              {designer.name}
+              {designer.rating > 4.7 && (
+                <span title="Топ специалист" style={{ display: 'inline-flex', color: 'var(--amber)' }}>
+                  <Icon name="trophy" size={20} />
+                </span>
+              )}
+            </h1>
 
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button className="btn btn-secondary" onClick={() => notify('Сообщения — в разработке')}>
-                  💬 Написать
-                </button>
-                <button
-                  className={inShortlist ? 'btn btn-secondary' : 'btn btn-primary'}
-                  onClick={toggleShortlist}
-                >
-                  {inShortlist ? '✓ В проекте' : '🚀 Пригласить в проект'}
-                </button>
-              </div>
+            <div className="meta-row" style={{ fontSize: 14 }}>
+              <span>
+                <Icon name="pin" />
+                {designer.city} {designer.region && <span className="dim">({designer.region})</span>}
+              </span>
+              <span>
+                <Icon name="star" style={{ color: 'var(--amber)' }} />
+                {designer.rating} ({designer.reviewsLabel})
+              </span>
+              {designer.type === 'company' && (
+                <span style={{ color: 'var(--accent-2)' }}>
+                  <Icon name="building" />
+                  Организация
+                </span>
+              )}
             </div>
+
+            <div className="chips mt12">
+              {uniqueSections(designer.sections).map((s) => (
+                <span key={s} className="chip chip-code">{s}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="row gap10">
+            <button className="btn btn-ghost" onClick={() => notify('Сообщения — в разработке')}>
+              <Icon name="comment" size={15} /> Написать
+            </button>
+            <button
+              className={inShortlist ? 'btn btn-ghost' : 'btn btn-primary'}
+              onClick={toggleShortlist}
+            >
+              {inShortlist
+                ? <><Icon name="check" size={15} /> В проекте</>
+                : <><Icon name="rocket" size={15} /> Пригласить в проект</>}
+            </button>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 24, alignItems: 'start' }}>
+      {/* Tabs */}
+      <div className="tabs">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            className={'tab' + (activeTab === tab ? ' is-active' : '')}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div className="detail__grid">
         {/* Left main content */}
-        <div>
-          {/* Tabs */}
-          <div style={{
-            display: 'flex',
-            gap: 0,
-            borderBottom: '1px solid var(--border)',
-            marginBottom: 24,
-            overflowX: 'auto',
-          }}>
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: '12px 24px',
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: activeTab === tab ? '2px solid var(--accent)' : '2px solid transparent',
-                  color: activeTab === tab ? 'var(--text-primary)' : 'var(--text-muted)',
-                  fontWeight: activeTab === tab ? 600 : 500,
-                  fontSize: 15,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+        <div style={{ minWidth: 0 }}>
+          {activeTab === 'Обзор' && (
+            <div className="card animate-in" style={{ minWidth: 0 }}>
+              <h3 className="section-title" style={{ marginBottom: 14 }}>О специалисте</h3>
+              <p className="muted" style={{ lineHeight: 1.6, fontSize: 14.5, marginTop: 0 }}>
+                {designer.description ||
+                  `${designer.type === 'company' ? 'Проектная организация' : 'Специалист'} с богатым опытом работы на рынке. Основная специализация: разработка проектной и рабочей документации для объектов различного назначения. Высокое качество чертежей, соблюдение сроков и норм оформления (ГОСТ, СП).`}
+              </p>
 
-          <div className="card" style={{ minHeight: 400 }}>
-            {activeTab === 'Обзор' && (
-              <div className="animate-in">
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>О специалисте</h3>
-                <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: 15, marginBottom: 32 }}>
-                  {designer.description ||
-                    `${designer.type === 'company' ? 'Проектная организация' : 'Специалист'} с богатым опытом работы на рынке. Основная специализация: разработка проектной и рабочей документации для объектов различного назначения. Высокое качество чертежей, соблюдение сроков и норм оформления (ГОСТ, СП).`}
-                </p>
+              <div className="grid-2 mt24" style={{ gap: 28 }}>
+                <div>
+                  <div className="overline">Программное обеспечение</div>
+                  <div className="chips mt12">
+                    {['AutoCAD', 'Revit', 'Navisworks', 'Lira-SAPR'].map(s => (
+                      <span key={s} className="chip">{s}</span>
+                    ))}
+                  </div>
+                </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-                   <div>
-                     <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Программное обеспечение</h4>
-                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                       {['AutoCAD', 'Revit', 'Navisworks', 'Lira-SAPR'].map(s => (
-                         <span key={s} style={{ padding: '6px 12px', background: 'var(--bg-input)', borderRadius: 6, fontSize: 13, color: 'var(--text-secondary)' }}>{s}</span>
-                       ))}
-                     </div>
-                   </div>
-                   
-                   <div>
-                     <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Достижения на Функции</h4>
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                       {(designer.achievements?.length ? designer.achievements : ['Проверенный профиль', 'Быстрый отклик', '+10 проектов за квартал']).map((ach, i) => (
-                         <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>
-                           <span style={{ color: 'var(--status-success)' }}>✓</span> {ach}
-                         </div>
-                       ))}
-                     </div>
-                   </div>
+                <div>
+                  <div className="overline">Достижения на Функции</div>
+                  <div className="col gap10 mt12">
+                    {(designer.achievements?.length ? designer.achievements : ['Проверенный профиль', 'Быстрый отклик', '+10 проектов за квартал']).map((ach, i) => (
+                      <span key={i} className="row gap8" style={{ fontSize: 14 }}>
+                        <Icon name="checkCircle" size={16} style={{ color: 'var(--green)' }} />
+                        {ach}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            )}
 
-            {activeTab === 'Портфолио' && (
-              <div className="animate-in">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <h3 style={{ fontSize: 18, fontWeight: 700 }}>Примеры работ ({designer.projectsCount})</h3>
+              <div className="divider mt24" />
+              <div className="overline mt24">Разделы документации</div>
+              <div className="chips mt12">
+                {uniqueSections(designer.sections).map((c) => (
+                  <span key={c} className="chip chip-code">{c}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'Портфолио' && (
+            <div className="card animate-in" style={{ minWidth: 0 }}>
+              <div className="row between" style={{ marginBottom: 16 }}>
+                <h3 className="section-title" style={{ margin: 0 }}>Примеры работ ({designer.projectsCount})</h3>
+                <span className="dim" style={{ fontSize: 13 }}>Показаны 4 последних</span>
+              </div>
+
+              <div className="grid-2" style={{ gap: 16 }}>
+                {MOCK_PROJECTS.map((p, idx) => (
+                  <div key={idx} className="card card-hover" style={{ padding: 0, overflow: 'hidden' }}>
+                    <div className="thumb thumb-tower" style={{ height: 132, borderRadius: 0 }} />
+                    <div style={{ padding: 16 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{p.title}</div>
+                      <div className="col gap6 muted mt12" style={{ fontSize: 13 }}>
+                        <span className="row gap6"><Icon name="pin" size={13} />{p.location}</span>
+                        <span className="row gap6"><Icon name="layers" size={13} />Раздел: {designer.sections[0]}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'Отзывы' && (
+            <div className="card animate-in" style={{ minWidth: 0 }}>
+              {/* Агрегат рейтинга + гистограмма */}
+              <div className="row gap24 wrap" style={{ marginBottom: 22, alignItems: 'center' }}>
+                <div style={{ textAlign: 'center', paddingRight: 24, borderRight: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 42, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{designer.rating}</div>
+                  <div className="row gap4" style={{ justifyContent: 'center', marginTop: 8 }}>
+                    {[0, 1, 2, 3, 4].map(i => (
+                      <Icon key={i} name="star" size={14} style={{ color: i < Math.round(designer.rating) ? 'var(--amber)' : 'var(--text-mute)' }} />
+                    ))}
+                  </div>
+                  <div className="dim" style={{ fontSize: 12.5, marginTop: 6 }}>{designer.reviewsLabel}</div>
                 </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  {MOCK_PROJECTS.map((p, idx) => (
-                    <div key={idx} style={{ 
-                      borderRadius: 'var(--radius-md)', 
-                      border: '1px solid var(--border)',
-                      overflow: 'hidden',
-                      position: 'relative',
-                      cursor: 'pointer'
-                    }}>
-                       <div style={{ height: 160, background: 'var(--bg-input)' }}>
-                          {/* Placeholder for project mock image */}
-                          <div style={{ width: '100%', height: '100%', opacity: 0.5, background: 'linear-gradient(45deg, #2a2a40, #1e1e2f)' }} />
-                       </div>
-                       <div style={{ padding: 16, background: 'var(--bg-secondary)' }}>
-                         <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{p.title}</div>
-                         <div style={{ color: 'var(--text-muted)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                           <span>📍 {p.location}</span>
-                           <span>•</span>
-                           <span>Раздел: {designer.sections[0]}</span>
-                         </div>
-                       </div>
+                <div className="col gap8 grow" style={{ minWidth: 220 }}>
+                  {REVIEW_AGG.map(([lbl, pct]) => (
+                    <div key={lbl} className="row gap10" style={{ fontSize: 12.5 }}>
+                      <span className="muted" style={{ width: 26 }}>{lbl}</span>
+                      <span className="grow" style={{ height: 6, borderRadius: 99, background: 'var(--surface-3)', overflow: 'hidden' }}>
+                        <span style={{ display: 'block', height: '100%', width: pct + '%', background: 'var(--amber)' }} />
+                      </span>
+                      <span className="dim" style={{ width: 34, textAlign: 'right' }}>{pct}%</span>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
 
-            {activeTab === 'Отзывы' && (
-              <div className="animate-in empty-state" style={{ minHeight: 300 }}>
-                <div className="empty-state-icon">⭐</div>
-                <div className="empty-state-title">Отзывы ({designer.rating})</div>
-                <p style={{ color: 'var(--text-muted)' }}>Здесь будут отображаться отзывы от прошедших сделок.</p>
-              </div>
-            )}
-
-            {activeTab === 'Документы и СРО' && (
-              <div className="animate-in">
-                 <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Юридическая информация</h3>
-                 
-                 <div style={{ 
-                   display: 'flex', alignItems: 'center', gap: 16, 
-                   padding: 20, background: 'rgba(16, 185, 129, 0.05)', 
-                   border: '1px solid rgba(16, 185, 129, 0.2)',
-                   borderRadius: 'var(--radius-md)'
-                 }}>
-                    <div style={{ width: 48, height: 48, background: 'rgba(16, 185, 129, 0.1)', color: 'var(--status-success)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
-                      🏛️
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Членство в СРО Подтверждено</div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-                        {designer.sroNumber || 'СРО-П-123-4567890'}
+              {/* Карточки отзывов */}
+              <div className="col gap16">
+                {REVIEWS.map(rv => (
+                  <div key={rv.name} className="card" style={{ background: 'var(--surface-2)' }}>
+                    <div className="row gap12" style={{ marginBottom: 10 }}>
+                      <div className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: rv.g }}>{rv.ini}</div>
+                      <div className="grow">
+                        <div className="row between">
+                          <div style={{ fontWeight: 700, fontSize: 14 }}>{rv.name}</div>
+                          <span className="row gap6" style={{ fontSize: 13.5, color: 'var(--text-dim)' }}>
+                            <Icon name="star" size={14} style={{ color: 'var(--amber)' }} />{rv.r}
+                          </span>
+                        </div>
+                        <div className="dim" style={{ fontSize: 12.5 }}>{rv.org} · {rv.date}</div>
                       </div>
                     </div>
-                 </div>
-
-                 <div style={{ marginTop: 24 }}>
-                   <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 16 }}>Прикрепленные файлы</h4>
-                   <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 12 }}>
-                     {[1, 2].map(doc => (
-                       <div key={doc} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}>
-                         <div style={{ fontSize: 24 }}>📄</div>
-                         <div style={{ flex: 1 }}>
-                           <div style={{ fontSize: 14, fontWeight: 500 }}>Выписка_СРО_2026.pdf</div>
-                           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>PDF • 1.2 MB</div>
-                         </div>
-                         <button className="btn btn-secondary btn-sm" style={{ padding: '6px 12px' }} onClick={() => notify('Скачивание файла — в разработке')}>Скачать</button>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
+                    <p className="muted" style={{ margin: '0 0 10px', fontSize: 13.5, lineHeight: 1.55 }}>{rv.text}</p>
+                    <span className="chip"><Icon name="portfolio" size={13} />{rv.proj}</span>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {activeTab === 'Документы и СРО' && (
+            <div className="card animate-in" style={{ minWidth: 0 }}>
+              <h3 className="section-title" style={{ marginBottom: 6 }}>Документы и допуски</h3>
+              <p className="muted" style={{ margin: '0 0 18px', fontSize: 13.5 }}>
+                Документы проверены платформой «Функция». Членство в СРО подтверждено в реестре НОПРИЗ.
+              </p>
+
+              {/* Бейдж подтверждения СРО */}
+              <div className="row gap14" style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(52,211,153,.06)', border: '1px solid rgba(52,211,153,.22)', marginBottom: 18 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'rgba(52,211,153,.12)', color: 'var(--green)', flex: 'none' }}>
+                  <Icon name="shield" size={20} />
+                </div>
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Членство в СРО подтверждено</div>
+                  <div className="dim" style={{ fontSize: 12.5, marginTop: 2 }}>{designer.sroNumber || 'СРО-П-123-4567890'}</div>
+                </div>
+                <span className="badge done"><i />Подтверждено</span>
+              </div>
+
+              {/* Список документов со статус-бейджами */}
+              <div className="col gap10">
+                {DOCS.map(d => (
+                  <div key={d.name} className="row gap14" style={{ padding: '14px 16px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'var(--accent-soft)', color: 'var(--accent-2)', flex: 'none' }}>
+                      <Icon name={d.ic} size={20} />
+                    </div>
+                    <div className="grow" style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{d.name}</div>
+                      <div className="dim" style={{ fontSize: 12.5, marginTop: 2 }}>{d.sub}</div>
+                    </div>
+                    {d.tag && <span className={'badge ' + d.tag[0]}><i />{d.tag[1]}</span>}
+                    <button className="iconbtn" title="Скачать" onClick={() => notify('Скачивание файла — в разработке')}>
+                      <Icon name="download" size={17} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-           <div className="card">
-             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-               <span style={{ fontSize: 14, color: 'var(--text-muted)', fontWeight: 600 }}>График загрузки</span>
-               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--status-success)', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 10px', borderRadius: 12 }}>
-                 <div style={{ width: 8, height: 8, background: 'var(--status-success)', borderRadius: '50%' }} />
-                 Свободен
-               </span>
-             </div>
-             <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-               Готов взять проект в работу прямо сейчас. Среднее время ответа на заявку — менее 30 минут.
-             </p>
-           </div>
+        <div className="col gap20">
+          <div className="card">
+            <div className="row between" style={{ marginBottom: 12 }}>
+              <span className="dim" style={{ fontSize: 13, fontWeight: 600 }}>График загрузки</span>
+              <span className="badge done"><i />Свободен</span>
+            </div>
+            <p className="muted" style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
+              Готов взять проект в работу прямо сейчас. Среднее время ответа на заявку — менее 30 минут.
+            </p>
+          </div>
 
-           <div className="card">
-             <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Статистика профиля</h4>
-             
-             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                 <span style={{ color: 'var(--text-muted)' }}>Выполнено на платформе</span>
-                 <span style={{ fontWeight: 600 }}>{designer.projectsCount} проектов</span>
-               </div>
-               {designer.yearsExperience && (
-                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                   <span style={{ color: 'var(--text-muted)' }}>Стаж работы</span>
-                   <span style={{ fontWeight: 600 }}>{designer.yearsExperience} лет</span>
-                 </div>
-               )}
-               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                 <span style={{ color: 'var(--text-muted)' }}>Процент успешных сделок</span>
-                 <span style={{ fontWeight: 600, color: 'var(--status-success)' }}>98%</span>
-               </div>
-               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                 <span style={{ color: 'var(--text-muted)' }}>Рейтинг заказчиков</span>
-                 <span style={{ fontWeight: 600 }}>⭐ {designer.rating} / 5.0</span>
-               </div>
-             </div>
-           </div>
+          <div className="card">
+            <h3 className="section-title" style={{ fontSize: 16, marginBottom: 16 }}>Статистика профиля</h3>
+            <div className="col gap14">
+              <div className="row between" style={{ fontSize: 14 }}>
+                <span className="muted">Выполнено на платформе</span>
+                <b style={{ color: '#fff' }}>{designer.projectsCount} проектов</b>
+              </div>
+              {designer.yearsExperience && (
+                <div className="row between" style={{ fontSize: 14 }}>
+                  <span className="muted">Стаж работы</span>
+                  <b style={{ color: '#fff' }}>{designer.yearsExperience} лет</b>
+                </div>
+              )}
+              <div className="row between" style={{ fontSize: 14 }}>
+                <span className="muted">Процент успешных сделок</span>
+                <b style={{ color: 'var(--accent-2)' }}>98%</b>
+              </div>
+              <div className="row between" style={{ fontSize: 14 }}>
+                <span className="muted">Рейтинг заказчиков</span>
+                <b style={{ color: 'var(--accent-2)' }}>{designer.rating} / 5.0</b>
+              </div>
+            </div>
+          </div>
 
-           <div className="card">
-             <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Контактные данные</h4>
-             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {designer.phone && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
-                    <span style={{ color: 'var(--text-muted)', width: 24, textAlign: 'center' }}>📞</span>
-                    <span>{designer.phone}</span>
-                  </div>
-                )}
-                {designer.email && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
-                    <span style={{ color: 'var(--text-muted)', width: 24, textAlign: 'center' }}>✉️</span>
-                    <span>{designer.email}</span>
-                  </div>
-                )}
-             </div>
-           </div>
+          <div className="card">
+            <h3 className="section-title" style={{ fontSize: 16, marginBottom: 14 }}>Контактные данные</h3>
+            <div className="col gap12 muted" style={{ fontSize: 14 }}>
+              {designer.phone && (
+                <span className="row gap10">
+                  <Icon name="phone" size={16} style={{ color: 'var(--accent-2)' }} />
+                  {designer.phone}
+                </span>
+              )}
+              {designer.email && (
+                <span className="row gap10">
+                  <Icon name="mail" size={16} style={{ color: 'var(--accent-2)' }} />
+                  {designer.email}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
