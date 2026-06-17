@@ -49,14 +49,86 @@ function LandingToast() {
 // Карта грузится только на клиенте: maplibre-gl обращается к window и несовместим с SSR/prerender.
 const RegionMap = dynamic(() => import('./_landing/RegionMap').then(m => m.RegionMap), { ssr: false });
 
+/* разделы платформы для выпадающего «Главного меню» — ведут в приложение */
+const SECTIONS = [
+  ['grid', 'Заявки', 'orders', 'Проекты и тендеры'],
+  ['scan', 'Обследование', 'expertise', 'Биржа и аудит'],
+  ['pen', 'Проектировщики', 'designers', 'Подбор исполнителей'],
+  ['shield', 'Инженер-обследователь', 'experts', 'Аккредитованные бюро'],
+  ['stamp', 'Производители', 'manufacturers', 'Каталог решений'],
+  ['database', 'Нормативы', 'standards', 'ГОСТ, СП, ТУ'],
+  ['chart', 'Аналитика', 'analytics', 'Метрики по проектам'],
+  ['chat', 'Коммуникации', 'chat', 'Переписка по проектам'],
+  ['wallet', 'Тарифы', 'pricing', 'Планы и подписка'],
+  ['sliders', 'Настройки', 'settings', 'Профиль и организация'],
+];
+
+/* grid-pattern card (à la shadcn nav mega-menu): SVG grid + конический glow на hover */
+function gridSquares(n) {
+  n = n || 5;
+  const a = [];
+  for (let i = 0; i < n; i++) a.push([Math.floor(Math.random() * 4) + 7, Math.floor(Math.random() * 6) + 1]);
+  return a;
+}
+function GridPattern({ w = 22, h = 22, squares }) {
+  const id = React.useMemo(() => 'gp' + Math.random().toString(36).slice(2, 8), []);
+  return (
+    <svg aria-hidden="true" className="tl-gp">
+      <defs>
+        <pattern id={id} width={w} height={h} patternUnits="userSpaceOnUse" x={0} y={0}>
+          <path d={'M.5 ' + h + 'V.5H' + w} fill="none" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" strokeWidth={0} fill={'url(#' + id + ')'} />
+      {squares && (
+        <svg x={0} y={0} className="tl-gp__sq">
+          {squares.map(([x, y]) => <rect key={x + '-' + y} strokeWidth="0" width={w - 1} height={h - 1} x={x * w + 1} y={y * h + 1} />)}
+        </svg>
+      )}
+    </svg>
+  );
+}
+function GridCard({ link, onClick }) {
+  const sq = React.useMemo(() => gridSquares(5), []);
+  return (
+    <button className="tl-gcard" onClick={onClick}>
+      <div className="tl-gcard__bg">
+        <div className="tl-gcard__grid"><GridPattern squares={sq} /></div>
+        <div className="tl-gcard__glow" />
+      </div>
+      <span className="tl-gcard__ic"><Icon name={link[0]} size={20} /></span>
+      <div className="tl-gcard__body">
+        <span className="tl-gcard__t">{link[1]}</span>
+        <span className="tl-gcard__d">{link[3]}</span>
+      </div>
+    </button>
+  );
+}
+
 function Nav({ go }) {
   const [open, setOpen] = React.useState(false);
+  const [mega, setMega] = React.useState(false);
   const [pill, setPill] = React.useState({ left: 0, width: 0, opacity: 0 });
+  const megaRef = React.useRef(null);
+  const closeTimer = React.useRef(null);
   const { user, hydrated } = useApp();
   // До гидрации показываем гостевой вариант, чтобы серверный и клиентский HTML совпадали (без SSR-mismatch).
   const authed = hydrated && !!user;
   const auth = () => go && go('auth');
   const dashboard = () => go && go('dashboard');
+  // Переход в раздел приложения из «Главного меню» (через ROUTE_MAP в Page).
+  const goto = (url) => { clearTimeout(closeTimer.current); setMega(false); setOpen(false); go && go(url); };
+  const openMega = () => { clearTimeout(closeTimer.current); setMega(true); };
+  const closeMega = () => { clearTimeout(closeTimer.current); closeTimer.current = setTimeout(() => setMega(false), 160); };
+  React.useEffect(() => () => clearTimeout(closeTimer.current), []);
+  React.useEffect(() => {
+    if (!mega) return;
+    const h = (e) => { if (megaRef.current && !megaRef.current.contains(e.target)) setMega(false); };
+    const esc = (e) => { if (e.key === 'Escape') setMega(false); };
+    document.addEventListener('mousedown', h);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('keydown', esc); };
+  }, [mega]);
   const jump = (href) => (e) => {
     if (href && href.length > 1 && href[0] === '#') {
       e.preventDefault();
@@ -70,7 +142,47 @@ function Nav({ go }) {
   return (
     <header className="tl-nav">
       <div className="tl-nav__in">
-        <div className="tl-brand" style={{ cursor: 'pointer' }} onClick={() => go && go('landing')}><FuncMark size={28} /> <span className="tl-shimmer">ФУНКЦИЯ</span></div>
+        <div className="tl-navleft">
+          <div className="tl-brand" style={{ cursor: 'pointer' }} onClick={() => go && go('landing')}><FuncMark size={28} /> <span className="tl-shimmer">ФУНКЦИЯ</span></div>
+          <span className="tl-navsep" />
+          <div className="tl-mega" ref={megaRef} onMouseEnter={openMega} onMouseLeave={closeMega}>
+            <button className={'tl-megabtn' + (mega ? ' is-open' : '')} onClick={() => (mega ? closeMega() : openMega())} aria-expanded={mega}>
+              <Icon name="grid" size={16} /> Главное меню <Icon name="chevD" size={15} className="tl-megabtn__chev" />
+            </button>
+            {mega && (
+              <div className="tl-mega__panel" onMouseEnter={openMega} onMouseLeave={closeMega}>
+                <div className="tl-mega__cols">
+                  <div className="tl-mega__main">
+                    <div className="tl-mega__head">Основные разделы</div>
+                    <div className="tl-mega__cards">
+                      {SECTIONS.slice(0, 3).map((s) => <GridCard key={s[2]} link={s} onClick={() => goto(s[2])} />)}
+                    </div>
+                    <div className="tl-mega__rows">
+                      {SECTIONS.slice(3, 6).map((s) => (
+                        <button key={s[2]} className="tl-mega__lrow" onClick={() => goto(s[2])}>
+                          <span className="tl-mega__lt"><b>{s[1]}</b><span>{s[3]}</span></span>
+                          <span className="tl-mega__lic"><Icon name={s[0]} size={18} /></span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="tl-mega__side">
+                    <div className="tl-mega__head">Ещё</div>
+                    <div className="tl-mega__list">
+                      {SECTIONS.slice(6).map((s) => (
+                        <button key={s[2]} className="tl-mega__srow" onClick={() => goto(s[2])}>
+                          <Icon name={s[0]} size={16} className="tl-mega__sic" />
+                          <span className="tl-mega__sl">{s[1]}</span>
+                          <span className="tl-mega__arr"><Icon name="arrowRight" size={15} /></span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         <nav className="tl-links" onMouseLeave={() => setPill(p => ({ ...p, opacity: 0 }))}>
           {links.map(([l, h]) => <a key={l} href={h} onClick={jump(h)} onMouseEnter={(e) => { const el = e.currentTarget; setPill({ left: el.offsetLeft, width: el.offsetWidth, opacity: 1 }); }}>{l}</a>)}
           <span className="tl-navpill" style={{ left: pill.left, width: pill.width, opacity: pill.opacity }} />
@@ -95,6 +207,12 @@ function Nav({ go }) {
       {open && (
         <div className="tl-mobile">
           {links.map(([l, h]) => <a key={l} href={h} onClick={jump(h)}>{l}</a>)}
+          <div className="tl-mobile__group">
+            <div className="tl-mobile__group-h">Разделы платформы</div>
+            {SECTIONS.map(([ic, label, url]) => (
+              <button key={url} className="tl-mobile__sec" onClick={() => goto(url)}><Icon name={ic} size={17} /> {label}</button>
+            ))}
+          </div>
           <div className="tl-mobile__btns">
             {authed ? (
               <>
