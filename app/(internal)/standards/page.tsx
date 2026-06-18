@@ -475,6 +475,7 @@ function Drawer({ d, q, fav, onFav, onClose, onJump, byCode, onDownload, onCopy,
     ? d.rel.map(byCode).find((r) => r && r.status === 'Актуален')
     : null;
   return createPortal(
+    <div className="fx">
     <div className="nb-drawer" onClick={onClose}>
       <div className="nb-drawer__panel" onClick={(e) => e.stopPropagation()}>
         <div className="nb-drawer__head">
@@ -544,6 +545,7 @@ function Drawer({ d, q, fav, onFav, onClose, onJump, byCode, onDownload, onCopy,
           <button className="btn btn-ghost grow" onClick={() => onDownload(d)}><Icon name="download" size={15} /> Скачать PDF</button>
         </div>
       </div>
+    </div>
     </div>,
     document.body
   );
@@ -571,6 +573,7 @@ function Reader({ d, byCode, onClose }) {
     : null;
   const toc = [['1', 'Область применения'], ['2', 'Нормативные ссылки'], ['3', 'Основные положения'], ['4', 'Применение в проекте']];
   return createPortal(
+    <div className="fx">
     <div className="nb-reader">
       <div className="nb-reader__top">
         <button className="nb-reader__back" onClick={onClose}><Icon name="chevR" size={16} style={{ transform: 'rotate(180deg)' }} /> К разбору</button>
@@ -653,6 +656,7 @@ function Reader({ d, byCode, onClose }) {
           </article>
         </div>
       </div>
+    </div>
     </div>,
     document.body
   );
