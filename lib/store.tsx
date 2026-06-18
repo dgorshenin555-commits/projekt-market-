@@ -1,13 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { User, Order, OrderResponse } from './types';
-import { MOCK_ORDERS, MOCK_RESPONSES } from './mock-data';
+import { User, Order, OrderResponse, StandardDocument, ExpertiseResponse, ExpertiseProject } from './types';
+import { MOCK_ORDERS, MOCK_RESPONSES, MOCK_STANDARDS, MOCK_EXPERTISE_REQUESTS, MOCK_EXPERTISE_PROJECTS, MOCK_EXPERTISE_RESPONSES } from './mock-data';
 
 interface AppState {
   user: User | null;
   orders: Order[];
   responses: OrderResponse[];
+  favoriteStandards: string[];
 }
 
 interface AppContextType extends AppState {
@@ -24,6 +25,12 @@ interface AppContextType extends AppState {
   getResponsesForOrder: (orderId: string) => OrderResponse[];
   getMyOrders: () => Order[];
   getMyResponses: () => OrderResponse[];
+  favoriteStandards: string[];
+  toggleFavoriteStandard: (code: string) => void;
+  getFavoriteStandards: () => StandardDocument[];
+  getMyExpertiseResponses: () => ExpertiseResponse[];
+  getMyExpertiseProjects: () => ExpertiseProject[];
+  getRecommendedOrders: () => Order[];
   notice: { id: number; message: string } | null;
   notify: (message: string) => void;
 }
@@ -34,8 +41,10 @@ function generateId() {
   return Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 }
 
+const DEFAULT_FAVORITES = MOCK_STANDARDS.filter((s) => s.isFeatured).map((s) => s.code);
+
 function loadState(): AppState {
-  if (typeof window === 'undefined') return { user: null, orders: MOCK_ORDERS, responses: MOCK_RESPONSES };
+  if (typeof window === 'undefined') return { user: null, orders: MOCK_ORDERS, responses: MOCK_RESPONSES, favoriteStandards: DEFAULT_FAVORITES };
   try {
     const saved = localStorage.getItem('pm_state');
     if (saved) {
@@ -44,10 +53,11 @@ function loadState(): AppState {
         user: parsed.user || null,
         orders: parsed.orders?.length ? parsed.orders : MOCK_ORDERS,
         responses: parsed.responses?.length ? parsed.responses : MOCK_RESPONSES,
+        favoriteStandards: Array.isArray(parsed.favoriteStandards) ? parsed.favoriteStandards : DEFAULT_FAVORITES,
       };
     }
   } catch {}
-  return { user: null, orders: MOCK_ORDERS, responses: MOCK_RESPONSES };
+  return { user: null, orders: MOCK_ORDERS, responses: MOCK_RESPONSES, favoriteStandards: DEFAULT_FAVORITES };
 }
 
 function saveState(state: AppState) {
@@ -56,7 +66,7 @@ function saveState(state: AppState) {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>({ user: null, orders: MOCK_ORDERS, responses: MOCK_RESPONSES });
+  const [state, setState] = useState<AppState>({ user: null, orders: MOCK_ORDERS, responses: MOCK_RESPONSES, favoriteStandards: DEFAULT_FAVORITES });
   const [mounted, setMounted] = useState(false);
   const [notice, setNotice] = useState<{ id: number; message: string } | null>(null);
   const noticeCounter = useRef(0);
@@ -200,6 +210,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return state.responses.filter((r) => r.designerId === state.user?.id);
   }, [state.responses, state.user]);
 
+  const toggleFavoriteStandard = useCallback((code: string) => {
+    setState((prev) => ({
+      ...prev,
+      favoriteStandards: prev.favoriteStandards.includes(code)
+        ? prev.favoriteStandards.filter((c) => c !== code)
+        : [...prev.favoriteStandards, code],
+    }));
+  }, []);
+
+  const getFavoriteStandards = useCallback(
+    () => MOCK_STANDARDS.filter((s) => state.favoriteStandards.includes(s.code)),
+    [state.favoriteStandards]
+  );
+
+  // Сторона обследователя: мок представляет «текущего» эксперта прототипа.
+  // Шов изоляции данных — этот геттер; в реальном бэкенде фильтр будет по user.id.
+  const getMyExpertiseResponses = useCallback(
+    () => (state.user?.role === 'expert' ? MOCK_EXPERTISE_RESPONSES : []),
+    [state.user]
+  );
+
+  const getMyExpertiseProjects = useCallback(
+    () => (state.user?.role === 'expert' ? MOCK_EXPERTISE_PROJECTS : []),
+    [state.user]
+  );
+
+  // Рекомендации исполнителю: опубликованные заявки, пересекающиеся со
+  // специализацией пользователя; если совпадений нет — свежие опубликованные.
+  const getRecommendedOrders = useCallback(() => {
+    const published = state.orders.filter((o) => o.status === 'published');
+    const specs = state.user?.specializations || [];
+    const matched = specs.length
+      ? published.filter((o) => o.sections?.some((s) => specs.includes(s)))
+      : [];
+    return (matched.length ? matched : published).slice(0, 4);
+  }, [state.orders, state.user]);
+
   return (
     <AppContext.Provider
       value={{
@@ -209,6 +256,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addOrder, addResponse, hasResponded, selectExecutor,
         getOrderById, getResponsesForOrder,
         getMyOrders, getMyResponses,
+        toggleFavoriteStandard, getFavoriteStandards, getMyExpertiseResponses, getMyExpertiseProjects, getRecommendedOrders,
         notice, notify,
       }}
     >
