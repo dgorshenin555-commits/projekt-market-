@@ -18,7 +18,7 @@ function Kpi({ icon, num, label }) {
 }
 
 export function Overview() {
-  const { user, orders, getMyOrders, getMyResponses, getMyExpertiseResponses, getMyExpertiseProjects, getRecommendedOrders } = useApp();
+  const { user, orders, getMyOrders, getMyResponses, getMyExpertiseResponses, getMyExpertiseProjects, getRecommendedOrders, getRecommendedExpertise } = useApp();
   const grp = roleGroup(user.role);
 
   if (grp === 'customer') {
@@ -27,6 +27,7 @@ export function Overview() {
     const inwork = my.filter((o) => o.status === 'in_progress').length;
     const done = my.filter((o) => o.status === 'completed').length;
     const replies = my.reduce((s, o) => s + (o.responsesCount || 0), 0);
+    const withReplies = my.filter((o) => o.responsesCount > 0);
     return (
       <div className="cab-tabpane">
         <div className="grid-3 cab-kpis" style={{ marginBottom: 28 }}>
@@ -39,7 +40,7 @@ export function Overview() {
           <h2 className="section-title" style={{ margin: 0 }}>Последние отклики на мои заявки</h2>
           <Link href="/orders/new" className="btn btn-primary btn-sm"><Icon name="plus" size={15} /> Создать заявку</Link>
         </div>
-        {my.filter((o) => o.responsesCount > 0).slice(0, 4).map((o) => (
+        {withReplies.slice(0, 4).map((o) => (
           <Link key={o.id} href={`/orders/detail?id=${o.id}`} style={{ textDecoration: 'none' }}>
             <div className="card card-hover" style={{ marginBottom: 12 }}>
               <div className="row between gap16">
@@ -49,7 +50,7 @@ export function Overview() {
             </div>
           </Link>
         ))}
-        {my.filter((o) => o.responsesCount > 0).length === 0 && (
+        {withReplies.length === 0 && (
           <div className="empty"><div className="empty__icon"><Icon name="comment" size={24} /></div>
             <p className="muted" style={{ margin: '8px 0 0', fontSize: 14 }}>Откликов пока нет — опубликуйте заявку.</p></div>
         )}
@@ -63,7 +64,8 @@ export function Overview() {
   const projects = isExpert ? getMyExpertiseProjects() : orders.filter((o) => o.assignedDesignerId === user.id);
   const inWork = projects.filter((p) => (isExpert ? EXP_BUCKET(p.status) : ORDER_BUCKET(p.status)) === 'active').length;
   const done = projects.length - inWork;
-  const recommended = getRecommendedOrders();
+  const recommendedOrders = getRecommendedOrders();
+  const recommendedExpertise = getRecommendedExpertise();
   return (
     <div className="cab-tabpane">
       <div className="grid-3 cab-kpis" style={{ marginBottom: 28 }}>
@@ -76,16 +78,28 @@ export function Overview() {
         <h2 className="section-title" style={{ margin: 0 }}>{isExpert ? 'Рекомендованные обследования' : 'Рекомендованные заявки'}</h2>
         <Link href={isExpert ? '/expertise' : '/orders'} className="btn btn-primary btn-sm">{isExpert ? 'Смотреть обследования' : 'Смотреть заявки'}</Link>
       </div>
-      {recommended.map((o) => (
-        <Link key={o.id} href={`/orders/detail?id=${o.id}`} style={{ textDecoration: 'none' }}>
-          <div className="card card-hover" style={{ marginBottom: 12 }}>
-            <div className="row between gap16">
-              <div style={{ fontWeight: 700, fontSize: 15, minWidth: 0 }}>{o.title}</div>
-              <span className="price row gap6"><Icon name="wallet" size={15} style={{ color: 'var(--accent-2)' }} /> {o.budget}</span>
+      {isExpert
+        ? recommendedExpertise.map((e) => (
+          <Link key={e.id} href={`/expertise/detail?id=${e.id}`} style={{ textDecoration: 'none' }}>
+            <div className="card card-hover" style={{ marginBottom: 12 }}>
+              <div className="row between gap16">
+                <div style={{ fontWeight: 700, fontSize: 15, minWidth: 0 }}>{e.title}</div>
+                <span className="price row gap6"><Icon name="wallet" size={15} style={{ color: 'var(--accent-2)' }} /> {e.budget}</span>
+              </div>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        ))
+        : recommendedOrders.map((o) => (
+          <Link key={o.id} href={`/orders/detail?id=${o.id}`} style={{ textDecoration: 'none' }}>
+            <div className="card card-hover" style={{ marginBottom: 12 }}>
+              <div className="row between gap16">
+                <div style={{ fontWeight: 700, fontSize: 15, minWidth: 0 }}>{o.title}</div>
+                <span className="price row gap6"><Icon name="wallet" size={15} style={{ color: 'var(--accent-2)' }} /> {o.budget}</span>
+              </div>
+            </div>
+          </Link>
+        ))
+      }
     </div>
   );
 }
@@ -208,7 +222,7 @@ export function ExecResponses() {
             <div className="card card-hover">
               <div className="row between gap16" style={{ marginBottom: 8 }}>
                 <div style={{ fontWeight: 700, fontSize: 15 }}>Отклик на обследование</div>
-                <span className="badge done"><i />{r.status === 'accepted' ? 'Принят' : r.status === 'declined' ? 'Отклонён' : 'Отправлен'}</span>
+                <span className={'badge ' + (r.status === 'accepted' ? 'done' : r.status === 'declined' ? 'wait' : 'work')}><i />{r.status === 'accepted' ? 'Принят' : r.status === 'declined' ? 'Отклонён' : 'Отправлен'}</span>
               </div>
               <p className="muted" style={{ margin: '0 0 10px', fontSize: 13.5, lineHeight: 1.5 }}>{r.message}</p>
               {r.proposedBudget && <span className="price row gap6"><Icon name="wallet" size={15} style={{ color: 'var(--accent-2)' }} /> {r.proposedBudget}</span>}
@@ -258,7 +272,7 @@ export function ExecInWork() {
               <div key={p.id} className="card">
                 <div className="row between gap16" style={{ marginBottom: 8 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, minWidth: 0 }}>{p.title}</div>
-                  <span className="badge done"><i />{p.status}</span>
+                  <span className={'badge ' + (EXP_BUCKET(p.status) === 'done' ? 'done' : 'work')}><i />{p.status}</span>
                 </div>
                 <div className="row gap16 dim" style={{ fontSize: 13 }}>
                   <span>{p.company}</span><span>Замечаний: {p.fixedRemarks}/{p.totalRemarks}</span><span>Срок: {p.dueDate}</span>
@@ -301,7 +315,7 @@ export function ExecPublicCard() {
       <div className="row gap16 wrap" style={{ alignItems: 'flex-start' }}>
         <div className="col gap10" style={{ flex: 1, minWidth: 220 }}>
           <div className="dim" style={{ fontSize: 13 }}>{isExpert ? 'Виды обследования' : 'Разделы ПД'}</div>
-          <div className="chips">{specs.length ? specs.map((s) => <span key={s} className="chip chip-code">{s}</span>) : <span className="dim" style={{ fontSize: 13 }}>Не указаны — добавьте в профиле ниже.</span>}</div>
+          <div className="chips">{specs.length ? specs.map((s, i) => <span key={i} className="chip chip-code">{s}</span>) : <span className="dim" style={{ fontSize: 13 }}>Не указаны — добавьте в профиле ниже.</span>}</div>
         </div>
         <div className="col gap8" style={{ flex: 'none' }}>
           <span className="row gap6" style={{ fontSize: 13 }}><Icon name="cert" size={15} /> СРО: {user.sroNumber || '—'}</span>
@@ -318,7 +332,7 @@ export function ExecFavorites() {
   if (!favs.length)
     return <div className="cab-tabpane"><div className="empty"><div className="empty__icon"><Icon name="star" size={24} /></div>
       <h3 style={{ margin: '8px 0 4px', fontSize: 16, color: '#fff' }}>Нет избранных документов</h3>
-      <p className="muted" style={{ margin: '0 0 16px', fontSize: 14 }}>Отметьте документы ⭐ в разделе «Нормативы» — они появятся здесь.</p>
+      <p className="muted" style={{ margin: '0 0 16px', fontSize: 14 }}>Отметьте документы звёздочкой в разделе «Нормативы» — они появятся здесь.</p>
       <Link href="/standards" className="btn btn-primary">Открыть Нормативы</Link></div></div>;
   return (
     <div className="cab-tabpane">

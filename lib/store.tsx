@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { User, Order, OrderResponse, StandardDocument, ExpertiseResponse, ExpertiseProject } from './types';
+import { User, Order, OrderResponse, StandardDocument, ExpertiseResponse, ExpertiseProject, ExpertiseRequest } from './types';
 import { MOCK_ORDERS, MOCK_RESPONSES, MOCK_STANDARDS, MOCK_EXPERTISE_REQUESTS, MOCK_EXPERTISE_PROJECTS, MOCK_EXPERTISE_RESPONSES } from './mock-data';
 
 interface AppState {
@@ -31,6 +31,7 @@ interface AppContextType extends AppState {
   getMyExpertiseResponses: () => ExpertiseResponse[];
   getMyExpertiseProjects: () => ExpertiseProject[];
   getRecommendedOrders: () => Order[];
+  getRecommendedExpertise: () => ExpertiseRequest[];
   notice: { id: number; message: string } | null;
   notify: (message: string) => void;
 }
@@ -236,6 +237,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.user]
   );
 
+  const getRecommendedExpertise = useCallback(
+    () => MOCK_EXPERTISE_REQUESTS.slice(0, 4),
+    []
+  );
+
   // Рекомендации исполнителю: опубликованные заявки, пересекающиеся со
   // специализацией пользователя; если совпадений нет — свежие опубликованные.
   const getRecommendedOrders = useCallback(() => {
@@ -256,7 +262,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addOrder, addResponse, hasResponded, selectExecutor,
         getOrderById, getResponsesForOrder,
         getMyOrders, getMyResponses,
-        toggleFavoriteStandard, getFavoriteStandards, getMyExpertiseResponses, getMyExpertiseProjects, getRecommendedOrders,
+        toggleFavoriteStandard, getFavoriteStandards, getMyExpertiseResponses, getMyExpertiseProjects, getRecommendedOrders, getRecommendedExpertise,
         notice, notify,
       }}
     >
