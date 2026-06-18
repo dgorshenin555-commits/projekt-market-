@@ -484,7 +484,7 @@ function FiltersRow({ type, setType, status, setStatus, onlyFav, setOnlyFav }) {
 }
 
 export default function StandardsPage() {
-  const { notify } = useApp();
+  const { notify, favoriteStandards, toggleFavoriteStandard } = useApp();
 
   // Реальные документы + презентационное обогащение (реальные поля сохранены).
   const docs = useMemo(() => MOCK_STANDARDS.map((d) => enrich(d, MOCK_STANDARDS)), []);
@@ -498,10 +498,8 @@ export default function StandardsPage() {
   const [thinking, setThinking] = useState(false);
   const [open, setOpen] = useState(null);
 
-  // Избранное инициализируется из реального флага isFeatured (как в прежней версии).
-  const [favorites, setFavorites] = useState(
-    () => new Set(MOCK_STANDARDS.filter((s) => s.isFeatured).map((s) => s.code))
-  );
+  const favorites = new Set(favoriteStandards);
+  const toggleFavorite = toggleFavoriteStandard;
 
   const [type, setType] = useState('Все');
   const [status, setStatus] = useState(''); // '' = все статусы
@@ -522,15 +520,6 @@ export default function StandardsPage() {
   const reset = () => {
     setQ('');
     setAsked(null);
-  };
-
-  const toggleFavorite = (code) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(code)) next.delete(code);
-      else next.add(code);
-      return next;
-    });
   };
 
   const copyCode = (code) => {
