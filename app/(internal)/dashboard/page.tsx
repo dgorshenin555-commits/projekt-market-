@@ -7,7 +7,7 @@ import { useApp } from '@/lib/store';
 import { Icon } from '../../_orders/icons';
 import { Avatar } from '../../_orders/shared';
 import { CABINET_TABS, roleGroup } from '../../_cabinet/cabinet-data';
-import { Overview, Notifications, CustomerOrders, CustomerResponses, ExecResponses, ExecInWork, ExecFavorites } from '../../_cabinet/tabs';
+import { Overview, Notifications, CustomerOrders, CustomerResponses, ExecResponses, ExecInWork, ExecFavorites, ExecPublicCard } from '../../_cabinet/tabs';
 import { ProfileForm } from '../../_cabinet/ProfileForm';
 import '../../_orders/orders.css';
 
@@ -68,7 +68,7 @@ function CabinetContent() {
 
       {cur === 'overview' && <Overview />}
       {cur === 'notifications' && <Notifications />}
-      {cur === 'profile' && <ProfileForm />}
+      {cur === 'profile' && <>{grp === 'executor' && <ExecPublicCard />}<ProfileForm /></>}
       {cur === 'orders' && <CustomerOrders />}
       {cur === 'responses' && grp === 'customer' && <CustomerResponses />}
       {cur === 'responses' && grp === 'executor' && <ExecResponses />}

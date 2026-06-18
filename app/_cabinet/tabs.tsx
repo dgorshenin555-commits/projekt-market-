@@ -291,6 +291,27 @@ export function ExecInWork() {
   );
 }
 
+export function ExecPublicCard() {
+  const { user } = useApp();
+  const isExpert = user.role === 'expert';
+  const specs = user.specializations || [];
+  return (
+    <div className="card" style={{ marginBottom: 24 }}>
+      <h3 className="section-title" style={{ marginBottom: 14 }}>Публичная карточка</h3>
+      <div className="row gap16 wrap" style={{ alignItems: 'flex-start' }}>
+        <div className="col gap10" style={{ flex: 1, minWidth: 220 }}>
+          <div className="dim" style={{ fontSize: 13 }}>{isExpert ? 'Виды обследования' : 'Разделы ПД'}</div>
+          <div className="chips">{specs.length ? specs.map((s) => <span key={s} className="chip chip-code">{s}</span>) : <span className="dim" style={{ fontSize: 13 }}>Не указаны — добавьте в профиле ниже.</span>}</div>
+        </div>
+        <div className="col gap8" style={{ flex: 'none' }}>
+          <span className="row gap6" style={{ fontSize: 13 }}><Icon name="cert" size={15} /> СРО: {user.sroNumber || '—'}</span>
+          <span className="row gap6" style={{ fontSize: 13, color: 'var(--amber)', fontWeight: 600 }}><Icon name="star" size={15} /> рейтинг —</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ExecFavorites() {
   const { getFavoriteStandards, toggleFavoriteStandard } = useApp();
   const favs = getFavoriteStandards();
