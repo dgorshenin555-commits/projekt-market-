@@ -6,7 +6,7 @@ import { useApp } from '@/lib/store';
 import { Icon } from '../../_orders/icons';
 import { Avatar } from '../../_orders/shared';
 import { CABINET_TABS, roleGroup } from '../../_cabinet/cabinet-data';
-import { Overview, Notifications, CustomerOrders, CustomerResponses, ExecResponses, ExecInWork } from '../../_cabinet/tabs';
+import { Overview, Notifications, CustomerOrders, CustomerResponses, ExecResponses, ExecInWork, ExecFavorites } from '../../_cabinet/tabs';
 import { ProfileForm } from '../../_cabinet/ProfileForm';
 import '../../_orders/orders.css';
 
@@ -64,6 +64,7 @@ export default function CabinetPage() {
       {cur === 'responses' && grp === 'customer' && <CustomerResponses />}
       {cur === 'responses' && grp === 'executor' && <ExecResponses />}
       {cur === 'inwork' && <ExecInWork />}
+      {cur === 'favorites' && <ExecFavorites />}
     </div>
   );
 }

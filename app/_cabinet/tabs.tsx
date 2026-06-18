@@ -290,3 +290,33 @@ export function ExecInWork() {
     </div>
   );
 }
+
+export function ExecFavorites() {
+  const { getFavoriteStandards, toggleFavoriteStandard } = useApp();
+  const favs = getFavoriteStandards();
+  if (!favs.length)
+    return <div className="cab-tabpane"><div className="empty"><div className="empty__icon"><Icon name="star" size={24} /></div>
+      <h3 style={{ margin: '8px 0 4px', fontSize: 16, color: '#fff' }}>Нет избранных документов</h3>
+      <p className="muted" style={{ margin: '0 0 16px', fontSize: 14 }}>Отметьте документы ⭐ в разделе «Нормативы» — они появятся здесь.</p>
+      <Link href="/standards" className="btn btn-primary">Открыть Нормативы</Link></div></div>;
+  return (
+    <div className="cab-tabpane">
+      <div className="row between" style={{ marginBottom: 14 }}>
+        <h2 className="section-title" style={{ margin: 0 }}>Избранные документы</h2>
+        <Link href="/standards" className="btn btn-ghost btn-sm">Все нормативы <Icon name="arrowRight" size={14} /></Link>
+      </div>
+      <div className="col gap10">
+        {favs.map((d) => (
+          <div key={d.code} className="row gap14" style={{ padding: '13px 16px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+            <span className="chip chip-code" style={{ flex: 'none' }}>{d.type}</span>
+            <div className="grow" style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{d.code}</div>
+              <div className="dim" style={{ fontSize: 12.5, marginTop: 2 }}>{d.title} · {d.status}</div>
+            </div>
+            <button className="iconbtn" title="Убрать из избранного" onClick={() => toggleFavoriteStandard(d.code)} style={{ color: 'var(--amber)' }}><Icon name="star" size={17} /></button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
