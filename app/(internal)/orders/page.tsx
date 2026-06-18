@@ -11,7 +11,7 @@ import { Icon } from '../../_orders/icons';
 import { StatusBadge, STATUS_BADGE, typeImage, typeLabel, urgencyBucket, formatDeadline } from '../../_orders/shared';
 import '../../_orders/orders.css';
 
-const TYPE_OPTIONS = ['Все типы', 'Коммерческая недвижимость', 'Промышленность', 'Частное строительство', 'Линейные объекты', 'Здания и сооружения'];
+const TYPE_OPTIONS = ['Все типы', 'Коммерческая недвижимость', 'Жилая недвижимость', 'Промышленность', 'Частное строительство', 'Линейные объекты', 'Здания и сооружения'];
 const STATUS_OPTIONS = ['Все статусы', 'Опубликована', 'В работе', 'Завершена'];
 
 const URGENCY = [['Любой', null, '#9ca3af'], ['Срочно', 'u1', '#f4717f'], ['1–3 мес', 'u2', '#f5b13d'], ['3 мес+', 'u3', '#34d399']];

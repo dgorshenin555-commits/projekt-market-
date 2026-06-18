@@ -11,6 +11,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 import { Icon } from '../../../_orders/icons';
 import { Avatar, StatusBadge, typeImage, typeLabel, formatDeadline, formatMoney } from '../../../_orders/shared';
+import { STAGE_LABELS, SCALE_LABELS } from '@/lib/constants';
 import '../../../_orders/orders.css';
 
 const TABS = ['Описание', 'Проектировщики', 'Коммуникации', 'Замечания', 'Файлы'];
@@ -223,8 +224,8 @@ function OrderDetailContent() {
             <tbody>
               <tr><td>Тип объекта</td><td>{typeLabel(o.objectType)}</td></tr>
               <tr><td>Регион</td><td>{o.region}</td></tr>
-              <tr><td>Масштаб</td><td>{o.scale === 'team' ? 'Формирование команды' : 'Один специалист'}</td></tr>
-              <tr><td>Стадия</td><td>{o.stage === 'P' ? 'П' : 'РД'}</td></tr>
+              <tr><td>Масштаб</td><td>{SCALE_LABELS[o.scale] || 'Один специалист'}</td></tr>
+              <tr><td>Стадия</td><td>{STAGE_LABELS[o.stage] || o.stage}</td></tr>
               <tr><td>Разделы</td><td>{o.sections.join(' / ')}</td></tr>
             </tbody>
           </table>

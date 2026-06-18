@@ -1,12 +1,14 @@
-import { ObjectType, DesignStage } from './types';
+import { ObjectType, DesignStage, ProjectScale } from './types';
 
 // === Типы объектов ===
+// icon — ключ именованной SVG-иконки (_orders/icons), как в форме создания заявки.
 export const OBJECT_TYPES: { value: ObjectType; label: string; icon: string }[] = [
-  { value: 'private', label: 'Частное строительство', icon: '/private-house.png?v=2' },
-  { value: 'commercial', label: 'Коммерческая недвижимость', icon: '🏢' },
-  { value: 'industrial', label: 'Промышленность', icon: '🏭' },
-  { value: 'linear', label: 'Линейные объекты', icon: '🛤️' },
-  { value: 'buildings', label: 'Здания и сооружения', icon: '🏗️' },
+  { value: 'private', label: 'Частное строительство', icon: 'pin' },
+  { value: 'commercial', label: 'Коммерческая недвижимость', icon: 'building' },
+  { value: 'residential', label: 'Жилая недвижимость', icon: 'grid' },
+  { value: 'industrial', label: 'Промышленность', icon: 'factory' },
+  { value: 'linear', label: 'Линейные объекты', icon: 'globe' },
+  { value: 'buildings', label: 'Здания и сооружения', icon: 'layers' },
 ];
 
 // === Регионы ===
@@ -149,12 +151,29 @@ export const STAGE_RD_GROUPS: RDGroup[] = [
 ];
 
 // === Функция получения разделов по стадии и типу объекта ===
+// РД — группы разделов рабочей документации. Эскиз, П и ПД — единый состав
+// проектной документации (стадия «П») по ПП РФ №87; для линейных объектов — свой список.
 export function getSections(stage: DesignStage, objectType: ObjectType) {
-  if (stage === 'P') {
-    return objectType === 'linear' ? STAGE_P_LINEAR : STAGE_P_CAPITAL;
+  if (stage === 'RD') {
+    return STAGE_RD_GROUPS;
   }
-  return STAGE_RD_GROUPS;
+  return objectType === 'linear' ? STAGE_P_LINEAR : STAGE_P_CAPITAL;
 }
+
+// Отображаемые ярлыки стадий проектирования (для детали заявки, формы, превью).
+export const STAGE_LABELS: Record<DesignStage, string> = {
+  sketch: 'Эскиз',
+  P: 'П',
+  PD: 'ПД',
+  RD: 'РД',
+};
+
+// Отображаемые ярлыки типа привлечения (масштаба).
+export const SCALE_LABELS: Record<ProjectScale, string> = {
+  single: 'Один специалист',
+  team: 'Формирование команды',
+  org: 'Организация',
+};
 
 // === Статусы заявок ===
 export const ORDER_STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -168,6 +187,7 @@ export const ORDER_STATUS_MAP: Record<string, { label: string; color: string }> 
 export const OBJECT_TYPE_LABELS: Record<ObjectType, string> = {
   private: 'Частное строительство',
   commercial: 'Коммерческая недвижимость',
+  residential: 'Жилая недвижимость',
   industrial: 'Промышленность',
   linear: 'Линейные объекты',
   buildings: 'Здания и сооружения',

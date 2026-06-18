@@ -22,15 +22,18 @@ export interface User {
 export type ObjectType =
   | 'private'
   | 'commercial'
+  | 'residential'
   | 'industrial'
   | 'linear'
   | 'buildings';
 
 // === Стадии проектирования ===
-export type DesignStage = 'P' | 'RD';
+// sketch (Эскиз) и PD (ПД) — пред-/проектная документация: разделы подбираются
+// как для стадии «П». RD — рабочая документация (группы разделов).
+export type DesignStage = 'sketch' | 'P' | 'PD' | 'RD';
 
-// === Масштаб проекта ===
-export type ProjectScale = 'single' | 'team';
+// === Масштаб проекта (тип привлечения) ===
+export type ProjectScale = 'single' | 'team' | 'org';
 
 // === Статус заявки ===
 export type OrderStatus =
