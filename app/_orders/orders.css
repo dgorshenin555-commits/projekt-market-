@@ -1169,3 +1169,16 @@
 .fx .dp-foot__btn:hover { background: var(--surface-3); color: var(--text); }
 .fx .dp-foot__btn--dim { flex: 0 0 auto; padding: 0 14px; }
 
+/* ====== Личный кабинет ====== */
+.fx .cab-head { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.fx .cab-head__body { flex: 1; min-width: 0; }
+.fx .cab-head__meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
+.fx .cab-tabs { flex-wrap: wrap; margin-bottom: 24px; }
+.fx .cab-tabs .tab { display: inline-flex; align-items: center; gap: 7px; }
+.fx .cab-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 720px) { .fx .cab-kpis { grid-template-columns: repeat(2, 1fr); } .fx .cab-head { flex-wrap: wrap; } }
+.fx .cab-tabpane { animation: fade .35s ease both; }
+.fx .cab-seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); margin-bottom: 16px; }
+.fx .cab-seg button { height: 32px; padding: 0 16px; border-radius: 999px; border: none; background: transparent; color: var(--text-dim); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, color .15s; }
+.fx .cab-seg button.is-on { background: var(--grad); color: #fff; }
+
