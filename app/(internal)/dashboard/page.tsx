@@ -1,6 +1,7 @@
 // @ts-nocheck
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/lib/store';
 import { Icon } from '../../_orders/icons';
@@ -12,9 +13,19 @@ import '../../_orders/orders.css';
 
 const ROLE_LABEL = { customer: 'Заказчик', designer: 'Проектировщик', expert: 'Эксперт', manufacturer: 'Производитель' };
 
-export default function CabinetPage() {
+function CabinetContent() {
   const { user, logout, getMyOrders } = useApp();
-  const [tab, setTab] = useState('overview');
+  const sp = useSearchParams();
+
+  const grp = user ? roleGroup(user.role) : 'customer';
+  const tabs = user ? CABINET_TABS[grp] : [];
+  const initialTab = (() => {
+    if (!user) return 'overview';
+    const requested = sp.get('tab');
+    return (requested && tabs.some((t) => t.key === requested)) ? requested : 'overview';
+  })();
+
+  const [tab, setTab] = useState(initialTab);
 
   if (!user) {
     return (
@@ -28,8 +39,6 @@ export default function CabinetPage() {
     );
   }
 
-  const grp = roleGroup(user.role);
-  const tabs = CABINET_TABS[grp];
   const cur = tabs.find((t) => t.key === tab) ? tab : 'overview';
   const activeOrders = getMyOrders().filter((o) => o.status === 'published').length;
 
@@ -66,5 +75,13 @@ export default function CabinetPage() {
       {cur === 'inwork' && <ExecInWork />}
       {cur === 'favorites' && <ExecFavorites />}
     </div>
+  );
+}
+
+export default function CabinetPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted, #888)', fontSize: 14 }}>Загрузка…</div>}>
+      <CabinetContent />
+    </Suspense>
   );
 }

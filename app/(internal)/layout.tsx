@@ -5,16 +5,16 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 
-import { 
-  LayoutGrid, 
-  ScanFace, 
-  PenTool, 
-  ShieldCheck, 
-  Stamp, 
-  Database, 
-  MessageSquare, 
-  BarChart2, 
-  Settings2,
+import {
+  LayoutGrid,
+  ScanFace,
+  PenTool,
+  ShieldCheck,
+  Stamp,
+  Database,
+  MessageSquare,
+  BarChart2,
+  UserRound,
   Menu,
   X
 } from 'lucide-react';
@@ -28,7 +28,7 @@ const NAV_ITEMS = [
   { icon: Database, label: 'Нормативы', href: '/standards' },
   { icon: MessageSquare, label: 'Коммуникации', href: '/chat' },
   { icon: BarChart2, label: 'Аналитика', href: '/analytics' },
-  { icon: Settings2, label: 'Настройки', href: '/settings' },
+  { icon: UserRound, label: 'Личный кабинет', href: '/dashboard' },
 ];
 
 export default function InternalLayout({ children }: { children: React.ReactNode }) {
