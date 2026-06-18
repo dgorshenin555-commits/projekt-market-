@@ -11,6 +11,7 @@
    но НЕ меняют её (StandardDocument остаётся как есть). */
 
 import { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { MOCK_STANDARDS, MOCK_RECENT_CHANGES, MOCK_FAVORITES } from '@/lib/mock-data';
 import { useApp } from '@/lib/store';
 import { Icon } from '../../_orders/icons';
@@ -26,6 +27,28 @@ const STATUS = {
 const statusOf = (d) => STATUS[d.status] || STATUS['Актуален'];
 
 const TYPES = ['Все', 'ГОСТ', 'СП', 'СНиП', 'ТУ', 'ISO'];
+
+/* ---------- дисциплины / разделы проекта (для группировки библиотеки) ----------
+   Покрывают все теги, которые выдаёт SECTION_TAG для реальных документов. */
+const DISC = {
+  'ПЗ': 'Пояснительная записка',
+  'АР': 'Архитектурные решения',
+  'КР': 'Конструктивные решения',
+  'ОВ': 'Отопление и вентиляция',
+  'ВК': 'Водоснабжение и канализация',
+  'ЭОМ': 'Электроснабжение и электрооборудование',
+  'АК': 'Автоматизация и АСУ ТП',
+  'ТХ': 'Технологические решения',
+};
+const DISC_ORDER = ['ПЗ', 'АР', 'КР', 'ОВ', 'ВК', 'ЭОМ', 'АК', 'ТХ'];
+const SECTION_NAMES = DISC;
+
+/* ---------- виды библиотеки (CHANGELOG 3.5 — настройка представления) ---------- */
+const LIB_VIEWS = [
+  { key: 'cards', label: 'Карточки', icon: 'grid' },
+  { key: 'disc', label: 'Дисциплины', icon: 'columns' },
+  { key: 'table', label: 'Таблица', icon: 'file' },
+];
 
 /* ---------- презентационное обогащение реальных документов ----------
    Тексты «области применения», «ключевые пункты», связанные документы и теги —
@@ -269,28 +292,95 @@ function ThemeBlock({ theme, byCode, onOpen }) {
   );
 }
 
-/* ---------- карточка (сетка) ---------- */
+/* ---------- карточка v2 (сетка) — плотная, структурированная ---------- */
 function DocCard({ d, fav, onFav, onOpen }) {
   const st = statusOf(d);
   return (
     <div
-      className="card card-hover nb-card"
+      className="card card-hover nb-card2"
       onClick={onOpen}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter') onOpen(); }}
     >
       <span className="nb-card__edge" style={{ background: st.color }}></span>
-      <div className="row between" style={{ marginBottom: 12 }}>
-        <span className="chip chip-code">{d.code}</span>
+      <div className="nb-card2__top">
+        <span className="nb-typetag">{d.type}</span>
+        <span className="nb-status" style={{ color: st.color }}><i />{st.label}</span>
         <button className={'nb-fav' + (fav ? ' is-on' : '')} onClick={(e) => { e.stopPropagation(); onFav(); }} title="В избранное"><Icon name="star" size={16} /></button>
       </div>
-      <b className="nb-card__title">{d.title}</b>
-      <p className="nb-card__scope">{d.scope}</p>
-      <div className="row between" style={{ marginTop: 'auto' }}>
-        <span className="nb-status" style={{ color: st.color }}><i />{st.label}</span>
-        <span className="dim" style={{ fontSize: 12 }}>{d.upd}</span>
+      <span className="nb-card2__code">{d.code}</span>
+      <b className="nb-card2__title">{d.title}</b>
+      <div className="nb-card2__meta">
+        <div className="chips">{d.sections.map((s) => <span key={s} className="chip chip-code">{s}</span>)}</div>
+        <span className="nb-card2__upd">{d.upd}</span>
       </div>
+    </div>
+  );
+}
+
+/* ---------- строка группы (вид «Дисциплины») ---------- */
+function GroupRow({ d, fav, onFav, onOpen }) {
+  const st = statusOf(d);
+  return (
+    <div className="nb-grow" onClick={onOpen} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') onOpen(); }}>
+      <span className="chip chip-code nb-grow__code">{d.code}</span>
+      <span className="nb-grow__title">{d.title}</span>
+      <span className="nb-status nb-grow__st" style={{ color: st.color }}><i />{st.label}</span>
+      <span className="nb-grow__upd">{d.upd}</span>
+      <button className={'nb-fav' + (fav ? ' is-on' : '')} onClick={(e) => { e.stopPropagation(); onFav(); }} title="В избранное"><Icon name="star" size={15} /></button>
+      <Icon name="chevR" size={15} className="nb-grow__go" />
+    </div>
+  );
+}
+
+/* ---------- библиотека, сгруппированная по дисциплинам ---------- */
+function Grouped({ docs, rowProps }) {
+  const groups = DISC_ORDER
+    .map((code) => [code, docs.filter((d) => d.sections.includes(code))])
+    .filter(([, arr]) => arr.length);
+  return (
+    <div className="nb-groups">
+      {groups.map(([code, arr]) => (
+        <details key={code} className="nb-grp" open>
+          <summary className="nb-grp__head">
+            <Icon name="chevR" size={15} className="nb-grp__caret" />
+            <b>{DISC[code]}</b>
+            <span className="chip chip-code">{code}</span>
+            <span className="nb-grp__n">{arr.length}</span>
+          </summary>
+          <div className="nb-grp__body">
+            {arr.map((d) => <GroupRow key={d.code} {...rowProps(d)} />)}
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- библиотека в виде таблицы ---------- */
+function TableView({ docs, rowProps }) {
+  return (
+    <div className="nb-tblwrap">
+      <table className="nb-tbl">
+        <thead><tr><th>Код</th><th>Документ</th><th>Разделы</th><th>Статус</th><th>Обновлён</th><th></th></tr></thead>
+        <tbody>
+          {docs.map((d) => {
+            const st = statusOf(d);
+            const p = rowProps(d);
+            return (
+              <tr key={d.code} onClick={p.onOpen}>
+                <td><span className="chip chip-code">{d.code}</span></td>
+                <td className="nb-tbl__title">{d.title}</td>
+                <td><div className="chips">{d.sections.map((s) => <span key={s} className="chip chip-code">{s}</span>)}</div></td>
+                <td><span className="nb-status" style={{ color: st.color }}><i />{st.label}</span></td>
+                <td className="nb-tbl__upd">{d.upd}</td>
+                <td><button className={'nb-fav' + (p.fav ? ' is-on' : '')} onClick={(e) => { e.stopPropagation(); p.onFav(); }} title="В избранное"><Icon name="star" size={15} /></button></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -371,8 +461,8 @@ function FavStrip({ items }) {
   );
 }
 
-/* ---------- панель разбора документа ---------- */
-function Drawer({ d, q, fav, onFav, onClose, onJump, byCode, onDownload, onView, onCopy }) {
+/* ---------- панель разбора документа (портал в document.body) ---------- */
+function Drawer({ d, q, fav, onFav, onClose, onJump, byCode, onDownload, onCopy, onRead }) {
   const st = statusOf(d);
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -384,7 +474,7 @@ function Drawer({ d, q, fav, onFav, onClose, onJump, byCode, onDownload, onView,
   const repl = isStale
     ? d.rel.map(byCode).find((r) => r && r.status === 'Актуален')
     : null;
-  return (
+  return createPortal(
     <div className="nb-drawer" onClick={onClose}>
       <div className="nb-drawer__panel" onClick={(e) => e.stopPropagation()}>
         <div className="nb-drawer__head">
@@ -400,7 +490,7 @@ function Drawer({ d, q, fav, onFav, onClose, onJump, byCode, onDownload, onView,
           <p className="nb-drawer__title">{d.title}</p>
           <div className="nb-drawer__meta">
             <span><Icon name="file" size={13} /> {d.type}</span>
-            <span><Icon name="calendar" size={13} /> {d.year}</span>
+            <span><Icon name="calendar" size={13} /> введён {d.intro}</span>
             <span><Icon name="clock" size={13} /> {d.upd}</span>
           </div>
         </div>
@@ -450,11 +540,121 @@ function Drawer({ d, q, fav, onFav, onClose, onJump, byCode, onDownload, onView,
           )}
         </div>
         <div className="nb-drawer__foot">
-          <button className="btn btn-primary grow" onClick={() => onDownload(d)}><Icon name="download" size={15} /> Скачать PDF</button>
-          <button className="btn btn-ghost grow" onClick={() => onView(d)}><Icon name="eye" size={15} /> Читать онлайн</button>
+          <button className="btn btn-primary grow" onClick={onRead}><Icon name="eye" size={15} /> Читать онлайн</button>
+          <button className="btn btn-ghost grow" onClick={() => onDownload(d)}><Icon name="download" size={15} /> Скачать PDF</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
+  );
+}
+
+/* ---------- область чтения документа (полноэкранная, портал в document.body) ---------- */
+function Reader({ d, byCode, onClose }) {
+  const st = statusOf(d);
+  const docRef = useRef(null);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  // Плавный скролл к секции через контейнер прокрутки (не scrollIntoView).
+  const jump = (id) => {
+    const c = docRef.current;
+    const el = c && c.querySelector('#' + id);
+    if (el && c) c.scrollTo({ top: el.offsetTop - 18, behavior: 'smooth' });
+  };
+  const points = d.points.filter(([ref]) => ref !== '—');
+  const isStale = d.status === 'Отменён' || d.status === 'Устарел';
+  const repl = isStale
+    ? d.rel.map(byCode).find((r) => r && r.status === 'Актуален')
+    : null;
+  const toc = [['1', 'Область применения'], ['2', 'Нормативные ссылки'], ['3', 'Основные положения'], ['4', 'Применение в проекте']];
+  return createPortal(
+    <div className="nb-reader">
+      <div className="nb-reader__top">
+        <button className="nb-reader__back" onClick={onClose}><Icon name="chevR" size={16} style={{ transform: 'rotate(180deg)' }} /> К разбору</button>
+        <span className="nb-reader__crumb"><b>{d.code}</b><span className="dim">{d.type}</span></span>
+        <div className="row gap8" style={{ marginLeft: 'auto' }}>
+          <button className="btn btn-ghost btn-sm"><Icon name="download" size={14} /> PDF</button>
+          <button className="iconbtn" style={{ width: 34, height: 34 }} onClick={onClose} aria-label="Закрыть"><Icon name="x" size={16} /></button>
+        </div>
+      </div>
+      <div className="nb-reader__main">
+        <aside className="nb-reader__toc">
+          <div className="nb-reader__toch">Содержание</div>
+          {toc.map(([n, t]) => (
+            <button key={n} type="button" className="nb-reader__tocitem" onClick={() => jump('sec' + n)}>
+              <span className="nb-reader__tocn">{n}</span>{t}
+            </button>
+          ))}
+          {points.length > 0 && (
+            <>
+              <div className="nb-reader__toch" style={{ marginTop: 18 }}>Ключевые пункты</div>
+              {points.map(([ref]) => (
+                <button key={ref} type="button" className="nb-reader__tocitem nb-reader__tocsub" onClick={() => jump('sec3')}>
+                  <span className="nb-reader__tocn">§</span>{ref}
+                </button>
+              ))}
+            </>
+          )}
+        </aside>
+        <div className="nb-reader__scroll" ref={docRef}>
+          <article className="nb-reader__doc">
+            <div className="nb-reader__dochead">
+              <span className="nb-status nb-status--badge" style={{ color: st.color, background: `color-mix(in srgb, ${st.color} 13%, transparent)` }}><i />{st.label}</span>
+              <div className="nb-reader__code">{d.code}</div>
+              <h1 className="nb-reader__title">{d.title}</h1>
+              <div className="nb-reader__meta">{d.type} · введён в действие {d.intro} · {d.upd}</div>
+            </div>
+            {isStale && (
+              <div className="nb-alert nb-reader__alert" style={{ borderColor: `color-mix(in srgb, ${st.color} 35%, transparent)`, background: `color-mix(in srgb, ${st.color} 9%, transparent)` }}>
+                <Icon name="shield" size={17} style={{ color: st.color, flex: 'none', marginTop: 1 }} />
+                <span>{d.status === 'Отменён' ? 'Документ заменён — для новых проектов не применяется.' : 'Редакция устарела — сверьтесь с актуальной редакцией.'}{repl && <> Действующая редакция — <b>{repl.code}</b>.</>}</span>
+              </div>
+            )}
+            <section id="sec1" className="nb-reader__sec">
+              <h2><span className="nb-reader__secn">1</span>Область применения</h2>
+              <p>{d.scope}</p>
+              <p>Требования настоящего документа применяются при проектировании новых и реконструируемых объектов капитального строительства и распространяются на разделы {d.sections.map((s) => SECTION_NAMES[s] || s).join(', ')}.</p>
+            </section>
+            <section id="sec2" className="nb-reader__sec">
+              <h2><span className="nb-reader__secn">2</span>Нормативные ссылки</h2>
+              {d.rel && d.rel.length > 0 ? (
+                <>
+                  <p>В настоящем документе использованы нормативные ссылки на следующие документы:</p>
+                  <ul className="nb-reader__refs">
+                    {d.rel.map((c) => { const r = byCode(c); return <li key={c}><b>{c}</b>{r ? ' — ' + r.title : ''}</li>; })}
+                  </ul>
+                </>
+              ) : (
+                <p className="dim">Прямые нормативные ссылки отсутствуют.</p>
+              )}
+            </section>
+            <section id="sec3" className="nb-reader__sec">
+              <h2><span className="nb-reader__secn">3</span>Основные положения</h2>
+              {points.length > 0 ? (
+                points.map(([ref, text]) => (
+                  <div key={ref} className="nb-reader__clause">
+                    <span className="nb-reader__cnum">{ref}</span>
+                    <p>{text}.</p>
+                  </div>
+                ))
+              ) : (
+                <p className="dim">Документ сохранён в базе для работы с архивными проектами.</p>
+              )}
+            </section>
+            <section id="sec4" className="nb-reader__sec">
+              <h2><span className="nb-reader__secn">4</span>Применение в проекте</h2>
+              <p>Документ используется при разработке разделов проектной документации:</p>
+              <div className="chips" style={{ marginTop: 4 }}>{d.sections.map((s) => <span key={s} className="chip chip-code">{s}</span>)}</div>
+            </section>
+            <div className="nb-reader__end">Текст приведён в справочном виде. Полная редакция — в официальном издании {d.code}.</div>
+          </article>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -497,6 +697,7 @@ export default function StandardsPage() {
   const [asked, setAsked] = useState(null);
   const [thinking, setThinking] = useState(false);
   const [open, setOpen] = useState(null);
+  const [reading, setReading] = useState(null); // открытый Reader (полноэкранное чтение)
 
   // Избранное инициализируется из реального флага isFeatured (как в прежней версии).
   const [favorites, setFavorites] = useState(
@@ -506,6 +707,7 @@ export default function StandardsPage() {
   const [type, setType] = useState('Все');
   const [status, setStatus] = useState(''); // '' = все статусы
   const [onlyFav, setOnlyFav] = useState(false);
+  const [libView, setLibView] = useState('cards'); // вид библиотеки: cards | disc | table
 
   const searching = q.trim().length > 1;
   const results = useMemo(() => (searching ? searchDocs(q, docs) : []), [q, searching, docs]);
@@ -539,7 +741,6 @@ export default function StandardsPage() {
   };
 
   const downloadDoc = () => notify('Скачивание PDF появится в ближайшем обновлении');
-  const viewDoc = () => notify('Просмотр документа — в разработке');
 
   // Фильтрация библиотеки по реальным полям type/status + избранное.
   const filtered = docs.filter(
@@ -555,6 +756,16 @@ export default function StandardsPage() {
     onFav: () => toggleFavorite(d.code),
     onOpen: () => setOpen(d),
   });
+
+  // Рендер библиотеки по выбранному виду (CHANGELOG 3.5 — настройка представления).
+  const renderLib = (items) => {
+    if (!items.length) {
+      return <div className="nb-empty">Под выбранные фильтры ничего не попало — сбросьте часть условий.</div>;
+    }
+    if (libView === 'table') return <TableView docs={items} rowProps={rowProps} />;
+    if (libView === 'disc') return <Grouped docs={items} rowProps={rowProps} />;
+    return <div className="nb-grid">{items.map((d) => <DocCard key={d.code} {...rowProps(d)} />)}</div>;
+  };
 
   const pills = (
     <div className="ai-pills nb-sugg nb-pills">
@@ -581,10 +792,11 @@ export default function StandardsPage() {
       onJump={(r) => setOpen(r)}
       byCode={byCode}
       onDownload={downloadDoc}
-      onView={viewDoc}
       onCopy={copyCode}
+      onRead={() => setReading(open)}
     />
   );
+  const reader = reading && <Reader d={reading} byCode={byCode} onClose={() => setReading(null)} />;
 
   return (
     <div className="fx animate-in">
@@ -621,8 +833,22 @@ export default function StandardsPage() {
           <Strip changes={MOCK_RECENT_CHANGES} />
           <FavStrip items={MOCK_FAVORITES} />
           <div className="row between" style={{ margin: '0 0 14px', alignItems: 'baseline' }}>
-            <h3 className="section-title" style={{ fontSize: 16, margin: 0 }}>Библиотека</h3>
-            <span className="dim" style={{ fontSize: 12.5 }}>{filtered.length} из {docs.length}</span>
+            <div className="row gap8" style={{ alignItems: 'baseline' }}>
+              <h3 className="section-title" style={{ fontSize: 16, margin: 0 }}>Библиотека</h3>
+              <span className="dim" style={{ fontSize: 12.5 }}>{filtered.length} из {docs.length}</span>
+            </div>
+            <div className="nb-viewsw">
+              {LIB_VIEWS.map((v) => (
+                <button
+                  key={v.key}
+                  type="button"
+                  className={libView === v.key ? 'is-on' : ''}
+                  onClick={() => setLibView(v.key)}
+                >
+                  <Icon name={v.icon} size={14} /> {v.label}
+                </button>
+              ))}
+            </div>
           </div>
           <FiltersRow
             type={type}
@@ -632,17 +858,12 @@ export default function StandardsPage() {
             onlyFav={onlyFav}
             setOnlyFav={setOnlyFav}
           />
-          {filtered.length ? (
-            <div className="nb-grid">
-              {filtered.map((d) => <DocCard key={d.code} {...rowProps(d)} />)}
-            </div>
-          ) : (
-            <div className="nb-empty">Под выбранные фильтры ничего не попало — сбросьте часть условий.</div>
-          )}
+          {renderLib(filtered)}
         </>
       )}
 
       {drawer}
+      {reader}
     </div>
   );
 }
