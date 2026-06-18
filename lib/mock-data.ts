@@ -489,3 +489,17 @@ export const MOCK_EXPERTISE_PROJECTS: import('./types').ExpertiseProject[] = [
     dueDate: '2026-03-20'
   }
 ];
+
+// === Отклики на заявки на экспертизу ===
+export const MOCK_EXPERTISE_RESPONSES: import('./types').ExpertiseResponse[] = [
+  {
+    id: 'expRes1', expertiseId: 'expReq1', expertId: 'demo-expert', expertName: 'Демо Обследователь',
+    message: 'Готов выполнить обследование несущих конструкций, есть опыт по аналогичным объектам.',
+    proposedBudget: '180 000 ₽', proposedDeadline: '20 дней', status: 'sent', createdAt: '2026-06-12T09:00:00.000Z',
+  },
+  {
+    id: 'expRes2', expertiseId: 'expReq2', expertId: 'demo-expert', expertName: 'Демо Обследователь',
+    message: 'Проведём инструментальное обследование с тепловизионной съёмкой. Аккредитация в наличии.',
+    proposedBudget: '240 000 ₽', proposedDeadline: '25 дней', status: 'accepted', createdAt: '2026-06-13T11:30:00.000Z',
+  },
+];

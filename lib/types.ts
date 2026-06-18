@@ -168,6 +168,19 @@ export interface ExpertiseRequest {
   files?: string[][]; // [иконка, имя файла, размер]
 }
 
+// === Отклик инженера-обследователя на обследование ===
+export interface ExpertiseResponse {
+  id: string;
+  expertiseId: string;       // ссылка на ExpertiseRequest.id
+  expertId: string;          // ссылка на пользователя-обследователя
+  expertName: string;
+  message: string;
+  proposedBudget?: string;
+  proposedDeadline?: string;
+  status: 'sent' | 'accepted' | 'declined';
+  createdAt: string;
+}
+
 // === Экспертиза в работе (Проект) ===
 export interface ExpertiseProject {
   id: string;
