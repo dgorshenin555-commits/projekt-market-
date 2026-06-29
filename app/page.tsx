@@ -1109,6 +1109,62 @@ function Pricing({ go }) {
   );
 }
 
+function QuickDock({ go }) {
+  const [tilt, setTilt] = React.useState({ rx: 0, ry: 13 });
+  const [hover, setHover] = React.useState(null);
+
+  React.useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let raf;
+    const onMove = (e) => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const x = e.clientX / window.innerWidth - 0.5;
+        const y = e.clientY / window.innerHeight - 0.5;
+        setTilt({ rx: -y * 9, ry: 13 + x * 9 });
+      });
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => { window.removeEventListener('mousemove', onMove); cancelAnimationFrame(raf); };
+  }, []);
+
+  const paths = [
+    { ic: 'factory', label: 'Коммерция, промышленность', sub: 'Бизнес-объект', to: 'order-new', tone: 'amber' },
+    { ic: 'home', label: 'Строю свой дом', sub: 'Частный проект', to: 'order-new', tone: 'home' },
+  ];
+  const items = [
+    { ic: 'plus', label: 'Разместить заявку', sub: 'Опубликовать проект', to: 'order-new', tone: 'primary' },
+    { ic: 'search', label: 'Найти заказы', sub: 'Биржа проектов', to: 'auth', tone: 'pink' },
+    { ic: 'box', label: 'Каталог решений', sub: 'Решения и подбор', to: 'manufacturers', tone: 'green' },
+    { ic: 'database', label: 'Нормативы', sub: 'ГОСТ, СП, ТУ', to: 'standards', tone: 'blue' },
+  ];
+
+  const item = (it) => (
+    <button key={it.label} className={'tl-dock__item tl-dock__item--' + it.tone}
+      onClick={() => go && go(it.to)}
+      onMouseEnter={() => setHover(it.label)} onMouseLeave={() => setHover(null)}
+      style={{
+        transform: hover === it.label ? 'translateZ(46px) scale(1.05)'
+          : hover !== null ? 'translateZ(-14px)' : 'translateZ(0)',
+        opacity: hover !== null && hover !== it.label ? 0.58 : 1,
+      }}>
+      <span className="tl-dock__ic"><Icon name={it.ic} size={22} /></span>
+      <span className="tl-dock__tx"><b>{it.label}</b><span>{it.sub}</span></span>
+    </button>
+  );
+
+  return (
+    <div className="tl-dock" aria-label="Быстрые действия">
+      <div className="tl-dock__bar" style={{ transform: `perspective(1100px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)` }}>
+        <div className="tl-dock__head">Начать проект</div>
+        {paths.map(item)}
+        <div className="tl-dock__div" />
+        {items.map(item)}
+      </div>
+    </div>
+  );
+}
+
 function GlassFilter() {
   return (
     <svg style={{ display: 'none' }} aria-hidden="true">
@@ -1197,7 +1253,7 @@ function TestLanding({ go }) {
     window.addEventListener('resize', check);
     return () => { root.removeEventListener('scroll', check); window.removeEventListener('resize', check); };
   }, []);
-  return <main className="tl" ref={rootRef}><Nav go={go} /><Hero go={go} /><Features go={go} /><ObjectTypes go={go} /><Steps /><RegionMap go={go} /><Audience go={go} /><Pricing go={go} /><FAQ /><Band go={go} /><Footer /><LandingToast /></main>;
+  return <main className="tl" ref={rootRef}><QuickDock go={go} /><Nav go={go} /><Hero go={go} /><Features go={go} /><ObjectTypes go={go} /><Steps /><RegionMap go={go} /><Audience go={go} /><Pricing go={go} /><FAQ /><Band go={go} /><Footer /><LandingToast /></main>;
 }
 
 const ROUTE_MAP = {
