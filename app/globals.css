@@ -3275,3 +3275,88 @@ a:hover {
   border-top: 1px solid var(--border);
   padding-top: 24px;
 }
+
+/* ============================================================
+   Сгруппированное dock-меню (Cloud Design «Функция (7)»)
+   ============================================================ */
+.app-layout {
+  --accent-2: #ab87ff;
+  --blue:     #5b9dff;
+  --green:    #34d399;
+  --amber:    #f5b13d;
+  --pink:     #f06ea9;
+  --text:     #f1f1f5;
+  --text-dim: #9495a4;
+  --text-mute:#62636f;
+  --bg-2:     #0b0b11;
+}
+
+.tm-side {
+  background: linear-gradient(180deg, var(--bg-2) 0%, #0a0a10 100%);
+  padding-top: 0;
+}
+.tm-brand-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 16px 12px;
+}
+.tm-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; min-width: 0; text-decoration: none; transition: opacity .15s ease; }
+.tm-brand:hover { opacity: .85; }
+.tm-brand .sidebar-logo-icon { width: 32px; height: 32px; flex: none; box-shadow: var(--shadow-glow); }
+.tm-brand__name { font-size: 14px; font-weight: 800; letter-spacing: .14em; color: #fff; white-space: nowrap; }
+
+.tm-nav { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 12px; display: flex; flex-direction: column; gap: 4px; }
+.tm-group { display: flex; flex-direction: column; gap: 4px; }
+.tm-group + .tm-group { margin-top: 8px; padding-top: 9px; border-top: 1px solid rgba(255,255,255,.07); }
+.tm-head { font-size: 10px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: var(--text-mute); padding: 4px 8px 3px; }
+
+.tm-item {
+  --c: var(--accent-2);
+  display: flex; align-items: center; gap: 12px;
+  padding: 7px 9px; border-radius: 12px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--text-dim); font-family: inherit; font-size: 13.5px; font-weight: 500;
+  text-align: left; cursor: pointer; width: 100%; text-decoration: none;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+}
+.tm-item:hover { background: rgba(255,255,255,.05); color: var(--text); transform: translateX(2px); }
+.tm-chip {
+  width: 36px; height: 36px; flex: 0 0 auto; border-radius: 11px;
+  display: grid; place-items: center; color: var(--c);
+  background: color-mix(in srgb, var(--c) 26%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 42%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+  transition: background .18s ease, color .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.tm-chip svg { width: 19px; height: 19px; }
+.tm-label { flex: 1; min-width: 0; white-space: nowrap; }
+.tm-item:hover .tm-chip { background: color-mix(in srgb, var(--c) 34%, transparent); }
+.tm-item.is-active {
+  background: color-mix(in srgb, var(--c) 15%, transparent);
+  border-color: color-mix(in srgb, var(--c) 36%, transparent);
+  color: #fff; font-weight: 600;
+}
+.tm-item.is-active .tm-chip {
+  background: var(--c); color: #0b0b12; border-color: transparent;
+  box-shadow: 0 7px 18px -7px var(--c), inset 0 1px 0 rgba(255,255,255,.4);
+}
+
+.tm-foot {
+  margin-top: auto; border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 11px; padding: 14px 16px; cursor: pointer;
+  text-decoration: none; transition: background .15s ease;
+}
+.tm-foot:hover { background: rgba(255,255,255,.03); }
+.tm-foot__name { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tm-foot__sub { font-size: 11.5px; color: var(--text-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* collapsed (desktop) — icon-only rail */
+@media (min-width: 769px) {
+  .app-layout.sidebar-collapsed .tm-item { justify-content: center; padding: 7px 0; }
+  .app-layout.sidebar-collapsed .tm-head { display: none; }
+  .app-layout.sidebar-collapsed .tm-brand-row { justify-content: center; padding: 18px 0 12px; }
+  .app-layout.sidebar-collapsed .tm-foot { justify-content: center; padding: 14px 0; }
+}
+/* mobile — off-canvas dock needs a real width */
+@media (max-width: 768px) {
+  .sidebar.tm-side { width: 280px; }
+}

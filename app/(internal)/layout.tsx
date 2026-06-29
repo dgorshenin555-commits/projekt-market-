@@ -5,31 +5,34 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 
-import {
-  LayoutGrid,
-  ScanFace,
-  PenTool,
-  ShieldCheck,
-  Stamp,
-  Database,
-  MessageSquare,
-  BarChart2,
-  UserRound,
-  Menu,
-  X
-} from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { Icon } from '../_orders/icons';
 
-const NAV_ITEMS = [
-  { icon: LayoutGrid, label: 'Заявки', href: '/orders' },
-  { icon: ScanFace, label: 'Обследование', href: '/expertise' },
-  { icon: PenTool, label: 'Проектировщики', href: '/designers' },
-  { icon: ShieldCheck, label: 'Инженер-обследователь', href: '/experts' },
-  { icon: Stamp, label: 'Производители', href: '/manufacturers' },
-  { icon: Database, label: 'Нормативы', href: '/standards' },
-  { icon: MessageSquare, label: 'Коммуникации', href: '/chat' },
-  { icon: BarChart2, label: 'Аналитика', href: '/analytics' },
-  { icon: UserRound, label: 'Личный кабинет', href: '/dashboard' },
+type NavItem = { key: string; label: string; href: string; icon: string; c: string };
+
+// Сгруппированное dock-меню (Cloud Design «Функция (7)»). Цвет чипа задаётся через --c.
+const GROUPS: { title: string; items: NavItem[] }[] = [
+  { title: 'Работа', items: [
+    { key: 'orders', label: 'Заявки', href: '/orders', icon: 'grid', c: 'var(--accent-2)' },
+    { key: 'expertise', label: 'Обследование', href: '/expertise', icon: 'scan', c: 'var(--blue)' },
+  ] },
+  { title: 'Подбор', items: [
+    { key: 'designers', label: 'Проектировщики', href: '/designers', icon: 'pen', c: 'var(--green)' },
+    { key: 'experts', label: 'Инженер-обследователь', href: '/experts', icon: 'shield', c: 'var(--amber)' },
+    { key: 'manufacturers', label: 'Производители', href: '/manufacturers', icon: 'stamp', c: 'var(--pink)' },
+  ] },
+  { title: 'База знаний', items: [
+    { key: 'standards', label: 'Нормативы', href: '/standards', icon: 'database', c: 'var(--accent)' },
+    { key: 'chat', label: 'Коммуникации', href: '/chat', icon: 'chat', c: 'var(--green)' },
+    { key: 'analytics', label: 'Аналитика', href: '/analytics', icon: 'chart', c: 'var(--blue)' },
+  ] },
+  { title: 'Аккаунт', items: [
+    { key: 'pricing', label: 'Тарифы', href: '/pricing', icon: 'wallet', c: 'var(--amber)' },
+    { key: 'settings', label: 'Настройки', href: '/settings', icon: 'sliders', c: 'var(--text-dim)' },
+  ] },
 ];
+
+const TOOLBAR_ITEMS = GROUPS.flatMap((g) => g.items).slice(0, 6);
 
 export default function InternalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -80,22 +83,22 @@ export default function InternalLayout({ children }: { children: React.ReactNode
       )}
 
 
-      {/* Sidebar */}
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <Link href="/" className="sidebar-logo">
-            <div className="sidebar-logo-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      {/* Sidebar — сгруппированное dock-меню */}
+      <aside className={`sidebar tm-side ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="tm-brand-row">
+          <Link href="/" className="tm-brand" onClick={() => setSidebarOpen(false)}>
+            <span className="sidebar-logo-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 3H3v14h18V3z" />
                 <path d="M3 21l3-4" />
                 <path d="M21 21l-3-4" />
                 <path d="M9 7h6" />
                 <path d="M9 12h6" />
               </svg>
-            </div>
-            <span className="sidebar-text" style={{ letterSpacing: '2px', fontWeight: 800 }}>ФУНКЦИЯ</span>
+            </span>
+            <span className="tm-brand__name sidebar-text">ФУНКЦИЯ</span>
           </Link>
-          <button 
+          <button
             className="sidebar-close-btn"
             onClick={() => setSidebarOpen(false)}
           >
@@ -103,37 +106,40 @@ export default function InternalLayout({ children }: { children: React.ReactNode
           </button>
         </div>
 
-        <nav className="sidebar-nav">
-          {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.label + item.href}
-                href={item.href}
-                className={`sidebar-link ${isActive ? 'active' : ''}`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <span className="sidebar-link-icon">
-                  <Icon size={20} strokeWidth={2.5} />
-                </span>
-                <span className="sidebar-text">{item.label}</span>
-              </Link>
-            );
-          })}
+        <nav className="tm-nav">
+          {GROUPS.map((g) => (
+            <div className="tm-group" key={g.title}>
+              <div className="tm-head sidebar-text">{g.title}</div>
+              {g.items.map((n) => {
+                const active = pathname === n.href || pathname?.startsWith(n.href + '/');
+                return (
+                  <Link
+                    key={n.key}
+                    href={n.href}
+                    className={'tm-item' + (active ? ' is-active' : '')}
+                    style={{ '--c': n.c } as React.CSSProperties}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <span className="tm-chip"><Icon name={n.icon} size={19} /></span>
+                    <span className="tm-label sidebar-text">{n.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
-        {/* User block at bottom */}
+        {/* Футер — аккаунт, ведёт в Личный кабинет */}
         {user && (
-          <div className="sidebar-user">
-            <div className="sidebar-user-avatar">
+          <Link href="/dashboard" className="tm-foot" onClick={() => setSidebarOpen(false)}>
+            <div className="sidebar-user-avatar" style={{ width: 38, height: 38 }}>
               {user.name.substring(0, 2).toUpperCase()}
             </div>
-            <div className="sidebar-user-info">
-              <div className="sidebar-user-name">{user.name}</div>
-              <div className="sidebar-user-role">{user.email}</div>
+            <div className="sidebar-text" style={{ minWidth: 0 }}>
+              <div className="tm-foot__name">{user.name}</div>
+              <div className="tm-foot__sub">{user.email}</div>
             </div>
-          </div>
+          </Link>
         )}
       </aside>
 
@@ -170,9 +176,9 @@ export default function InternalLayout({ children }: { children: React.ReactNode
 
       {/* Bottom toolbar */}
       <footer className="internal-toolbar">
-        {NAV_ITEMS.slice(0, 6).map((item) => (
-          <Link key={item.label} href={item.href} className="landing-toolbar-item">
-            <span className="landing-toolbar-dot" style={{background: 'var(--accent)'}}></span> {item.label}
+        {TOOLBAR_ITEMS.map((item) => (
+          <Link key={item.key} href={item.href} className="landing-toolbar-item">
+            <span className="landing-toolbar-dot" style={{ background: item.c }}></span> {item.label}
           </Link>
         ))}
       </footer>

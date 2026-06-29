@@ -772,3 +772,37 @@
 .eye { background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: height .15s ease; }
 .pupil { background: #2d2d2d; border-radius: 50%; transition: transform .1s ease-out; }
 .pupil--bare { }
+
+/* ---- audience split (бизнес vs частный застройщик) — liquid glass (Функция 7) ---- */
+.tl-aud-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; text-align: left; }
+.tl-aud-bg { position: absolute; inset: -50px; z-index: 0; pointer-events: none; }
+.tl-aud-bg span { position: absolute; border-radius: 50%; filter: blur(60px); }
+.tl-aud-bg span:nth-child(1) { width: 360px; height: 360px; left: -10px; top: -30px; background: var(--accent); opacity: .42; }
+.tl-aud-bg span:nth-child(2) { width: 320px; height: 320px; right: 4%; bottom: -50px; background: #5b9dff; opacity: .3; }
+.tl-aud-bg span:nth-child(3) { width: 280px; height: 280px; left: 44%; top: 28%; background: #f06ea9; opacity: .2; }
+
+.tl-aud { position: relative; z-index: 1; overflow: hidden; isolation: isolate; border-radius: 24px; border: 1px solid rgba(255,255,255,.14); box-shadow: 0 6px 6px rgba(0,0,0,.22), 0 0 26px rgba(0,0,0,.14); transition: transform .5s cubic-bezier(.175,.885,.32,1.4), box-shadow .5s ease; }
+.tl-aud:hover { transform: translateY(-4px); }
+.tl-glass__warp { position: absolute; inset: 0; z-index: 0; backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); filter: url(#tl-glass-distortion); }
+.tl-glass__tint { position: absolute; inset: 0; z-index: 1; }
+.tl-glass__edge { position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none; box-shadow: inset 1.5px 1.5px 1px 0 rgba(255,255,255,.45), inset -1px -1px 1px 1px rgba(255,255,255,.16); }
+.tl-glass__content { position: relative; z-index: 3; display: flex; flex-direction: column; height: 100%; padding: 34px; }
+
+.tl-aud--pro .tl-glass__tint { background: linear-gradient(160deg, rgba(91,157,255,.13) 0%, rgba(255,255,255,.035) 60%); }
+.tl-aud--home .tl-glass__tint { background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 22%, transparent) 0%, rgba(255,255,255,.04) 60%); }
+
+.tl-aud__ic { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; color: var(--ac); background: color-mix(in srgb, var(--ac) 22%, transparent); border: 1px solid color-mix(in srgb, var(--ac) 40%, transparent); box-shadow: inset 0 1px 0 rgba(255,255,255,.3); margin-bottom: 20px; }
+.tl-aud__kicker { font-size: 12.5px; font-weight: 600; letter-spacing: .04em; color: var(--ac); margin-bottom: 6px; }
+.tl-aud__name { font-size: 24px; font-weight: 600; letter-spacing: -.02em; color: #fff; margin: 0 0 11px; }
+.tl-aud__desc { font-size: 14.5px; line-height: 1.6; color: rgba(255,255,255,.72); margin: 0 0 22px; }
+.tl-aud__tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 26px; }
+.tl-aud__tile { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 8px; border-radius: 15px; text-align: center; background: color-mix(in srgb, var(--ac) 8%, rgba(255,255,255,.025)); border: 1px solid color-mix(in srgb, var(--ac) 20%, rgba(255,255,255,.07)); transition: transform .35s cubic-bezier(.175,.885,.32,1.4), background .35s ease; }
+.tl-aud:hover .tl-aud__tile { transform: translateY(-3px); background: color-mix(in srgb, var(--ac) 13%, rgba(255,255,255,.03)); }
+.tl-aud__tile span { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; color: var(--ac); background: color-mix(in srgb, var(--ac) 18%, transparent); border: 1px solid color-mix(in srgb, var(--ac) 34%, transparent); box-shadow: inset 0 1px 0 rgba(255,255,255,.28); }
+.tl-aud__tile b { font-size: 12px; font-weight: 600; letter-spacing: -.01em; line-height: 1.2; color: rgba(255,255,255,.86); }
+.tl-aud__cta { margin-top: auto; }
+.tl-aud__btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 52px; border-radius: 13px; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.08); color: #fff; font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer; transition: all .4s cubic-bezier(.175,.885,.32,1.4); backdrop-filter: blur(4px); }
+.tl-aud__btn:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.36); transform: scale(1.015); }
+.tl-aud--pro { --ac: var(--blue); }
+.tl-aud--home { --ac: var(--accent-2); }
+@media (max-width: 820px) { .tl-aud-grid { grid-template-columns: 1fr; } }

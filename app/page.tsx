@@ -1109,6 +1109,73 @@ function Pricing({ go }) {
   );
 }
 
+function GlassFilter() {
+  return (
+    <svg style={{ display: 'none' }} aria-hidden="true">
+      <filter id="tl-glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+        <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence" />
+        <feComponentTransfer in="turbulence" result="mapped">
+          <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
+          <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
+          <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
+        </feComponentTransfer>
+        <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap" />
+        <feDisplacementMap in="SourceGraphic" in2="softMap" scale="90" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
+  );
+}
+
+function Audience({ go }) {
+  return (
+    <section className="tl-section" id="audience">
+      <GlassFilter />
+      <p className="tl-eyebrow">Кому подходит</p>
+      <h2 className="tl-h2">Для бизнеса и для частных застройщиков</h2>
+      <p className="tl-lead">Профессиональный инструмент для сложных объектов — и простой путь для тех, кто строит дом для себя.</p>
+      <div className="tl-aud-grid">
+        <div className="tl-aud-bg" aria-hidden="true"><span /><span /><span /></div>
+
+        <div className="tl-aud tl-aud--pro">
+          <div className="tl-glass__warp" /><div className="tl-glass__tint" /><div className="tl-glass__edge" />
+          <div className="tl-glass__content">
+            <span className="tl-aud__ic"><Icon name="portfolio" size={30} /></span>
+            <div className="tl-aud__kicker">Бизнес и профессионалы</div>
+            <h3 className="tl-aud__name">Коммерция и промышленность</h3>
+            <p className="tl-aud__desc">Полный цикл ПИР: проектировщики, экспертиза и СРО.</p>
+            <div className="tl-aud__tiles">
+              <div className="tl-aud__tile"><span><Icon name="building" size={23} /></span><b>Коммерция</b></div>
+              <div className="tl-aud__tile"><span><Icon name="factory" size={23} /></span><b>Промышленность</b></div>
+              <div className="tl-aud__tile"><span><Icon name="layers" size={23} /></span><b>Инфраструктура</b></div>
+            </div>
+            <div className="tl-aud__cta">
+              <button className="tl-aud__btn" onClick={() => go && go('order-new')}><Icon name="plus" size={15} /> Создать заявку на проект</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="tl-aud tl-aud--home">
+          <div className="tl-glass__warp" /><div className="tl-glass__tint" /><div className="tl-glass__edge" />
+          <div className="tl-glass__content">
+            <span className="tl-aud__ic"><Icon name="home" size={30} /></span>
+            <div className="tl-aud__kicker">Частное строительство</div>
+            <h3 className="tl-aud__name">Строю свой дом</h3>
+            <p className="tl-aud__desc">Инженерные системы для дома — сами, без специалистов.</p>
+            <div className="tl-aud__tiles">
+              <div className="tl-aud__tile"><span><Icon name="home" size={23} /></span><b>Дом</b></div>
+              <div className="tl-aud__tile"><span><Icon name="pin" size={23} /></span><b>Дача</b></div>
+              <div className="tl-aud__tile"><span><Icon name="star" size={23} /></span><b>Коттедж</b></div>
+            </div>
+            <div className="tl-aud__cta">
+              <button className="tl-aud__btn" onClick={() => go && go('order-new')}><Icon name="home" size={16} /> Спроектировать дом</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TestLanding({ go }) {
   const rootRef = React.useRef(null);
   React.useEffect(() => {
@@ -1130,7 +1197,7 @@ function TestLanding({ go }) {
     window.addEventListener('resize', check);
     return () => { root.removeEventListener('scroll', check); window.removeEventListener('resize', check); };
   }, []);
-  return <main className="tl" ref={rootRef}><Nav go={go} /><Hero go={go} /><Features go={go} /><ObjectTypes go={go} /><Steps /><RegionMap go={go} /><Pricing go={go} /><FAQ /><Band go={go} /><Footer /><LandingToast /></main>;
+  return <main className="tl" ref={rootRef}><Nav go={go} /><Hero go={go} /><Features go={go} /><ObjectTypes go={go} /><Steps /><RegionMap go={go} /><Audience go={go} /><Pricing go={go} /><FAQ /><Band go={go} /><Footer /><LandingToast /></main>;
 }
 
 const ROUTE_MAP = {

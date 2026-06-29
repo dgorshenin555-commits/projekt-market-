@@ -21,6 +21,7 @@ const paths = {
   menu:      <><path d="M4 6h16M4 12h16M4 18h16"/></>,
   pin:       <><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></>,
   building:  <><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M10 21v-3h4v3"/></>,
+  home:      <><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></>,
   factory:   <><path d="M3 21V10l5 3V10l5 3V7l6 4v10z"/><path d="M3 21h18"/><path d="M7 17h.01M12 17h.01M16 17h.01"/></>,
   clock:     <><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></>,
   wallet:    <><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 9h18M16 13h2"/></>,

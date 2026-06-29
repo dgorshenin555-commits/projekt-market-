@@ -69,7 +69,7 @@ const paths = {
   x:          <><path d="M6 6l12 12M18 6L6 18"/></>,
 };
 
-export function Icon({ name, size = 20, style, className, strokeWidth }) {
+export function Icon({ name, size = 20, style, className, strokeWidth }: { name: string; size?: number; style?: React.CSSProperties; className?: string; strokeWidth?: number }) {
   const d = paths[name];
   if (!d) return null;
   const p = strokeWidth ? { ...P, strokeWidth } : P;
